@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The home screen's controls, sized in design points times the stage scale.
-// They are real buttons (VoiceOver, press feedback) with no actions until their screens exist.
+// They are real buttons (VoiceOver, press feedback); only PLAY has an action so far.
 
 /// Avatar with level ring, name and combined rating.
 struct ProfileChip: View {
@@ -49,7 +49,7 @@ struct ProfileChip: View {
                     HStack(spacing: 4 * s) {
                         RatingHexagon()
                             .frame(width: 14 * s, height: 14 * s)
-                        Text(player.rating, format: .number)
+                        Text(player.rating, format: .number.grouping(.never))
                             .font(BrandFont.nunito(12 * s, 800))
                             .foregroundStyle(skin.sub)
                     }
@@ -287,8 +287,6 @@ struct SideTile: View {
 
 /// The thief's or police's rating, title and division badge under their pedestal.
 struct RatingPlate: View {
-    enum Role { case thief, police }
-
     let role: Role
     let rank: PlayerSummary.Rank
     let skin: HomeSkin
@@ -305,7 +303,7 @@ struct RatingPlate: View {
                         .font(BrandFont.nunito(10 * s, 900))
                         .tracking(1.2 * s)
                         .foregroundStyle(role == .thief ? skin.thiefLabel : skin.policeLabel)
-                    Text(rank.rating, format: .number)
+                    Text(rank.rating, format: .number.grouping(.never))
                         .font(BrandFont.nunito(16 * s, 900))
                         .monospacedDigit()
                     Text(rank.title)
@@ -329,34 +327,8 @@ struct RatingPlate: View {
     }
 
     private var badge: some View {
-        let dark = role == .thief ? Color(hex: 0x2A1A06) : Color(hex: 0x0E1E44)
-        return ZStack(alignment: .bottom) {
-            ZStack {
-                switch role {
-                case .thief:
-                    SVGShape("M19 1.5L36.5 19 19 36.5 1.5 19z", viewBox: Self.box).fill(Color(hex: 0x8A5A12))
-                    SVGShape("M19 3.5L34.5 19 19 34.5 3.5 19z", viewBox: Self.box).fill(Color(hex: 0xFFB547))
-                    SVGShape("M19 3.5L34.5 19 19 19 3.5 19z", viewBox: Self.box).fill(.white.opacity(0.22))
-                    SVGShape("M10.5 16.8Q14.5 13.8 19 16.8Q23.5 13.8 27.5 16.8Q27.5 20.6 23.8 20.9Q21 20.6 19 19Q17 20.6 14.2 20.9Q10.5 20.6 10.5 16.8Z", viewBox: Self.box).fill(dark)
-                case .police:
-                    SVGShape("M19 1L34 7v11c0 9-6.5 15-15 18.5C10.5 33 4 27 4 18V7z", viewBox: Self.box).fill(Color(hex: 0x1F4FA0))
-                    SVGShape("M19 3.2L32 8.4v9.6c0 7.9-5.7 13.2-13 16.3C11.7 31.2 6 25.9 6 18V8.4z", viewBox: Self.box).fill(Color(hex: 0x5AA2FF))
-                    SVGShape("M19 3.2L32 8.4v9.6H6V8.4z", viewBox: Self.box).fill(.white.opacity(0.2))
-                    SVGShape("M19 10l2.2 4.6 5 .6-3.7 3.4 1 5-4.5-2.5-4.5 2.5 1-5-3.7-3.4 5-.6z", viewBox: Self.box).fill(dark)
-                }
-            }
-            .frame(width: 38 * s, height: 38 * s)
-            Text(rank.division)
-                .font(BrandFont.nunito(9 * s, 900))
-                .foregroundStyle(role == .thief ? Color(hex: 0xFFC977) : Color(hex: 0x9CC6FF))
-                .padding(.horizontal, 4 * s)
-                .background(dark, in: RoundedRectangle(cornerRadius: 5 * s))
-                .offset(y: 3 * s)
-        }
-        .frame(width: 38 * s, height: 38 * s)
+        RankBadge(role: role, division: rank.division, size: 38 * s)
     }
-
-    private static let box = CGRect(x: 0, y: 0, width: 38, height: 38)
 }
 
 /// The match mode picked for PLAY.
@@ -379,9 +351,9 @@ struct ModeSelector: View {
                 }
                 .frame(width: 38 * s, height: 38 * s)
                 VStack(alignment: .leading, spacing: 1 * s) {
-                    Text("Quick match")
+                    Text("Classic match")
                         .font(BrandFont.nunito(15 * s, 900))
-                    Text("Best of 2 · 5–10 min · Casual")
+                    Text("Best of 8 · First to 5 · Ranked")
                         .font(BrandFont.nunito(11 * s, 700))
                         .foregroundStyle(skin.sub)
                         .lineLimit(1)
@@ -402,18 +374,19 @@ struct ModeSelector: View {
             .overlay(Capsule().strokeBorder(skin.panelBorder, lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Mode: Quick match, best of 2, about 5 to 10 minutes, casual rating. Change mode")
+        .accessibilityLabel("Mode: Classic match, best of 8, first to 5 round wins, ranked. Change mode")
     }
 }
 
 /// The big PLAY button: a chunky key that sinks onto its edge when pressed.
 struct PlayButton: View {
     let skin: HomeSkin
+    var action: () -> Void = {}
 
     @Environment(\.stageScale) private var s
 
     var body: some View {
-        Button {} label: {
+        Button(action: action) {
             HStack(spacing: 12 * s) {
                 Image(systemName: "play.fill")
                     .font(.system(size: 26 * s, weight: .black))
@@ -425,7 +398,7 @@ struct PlayButton: View {
             .foregroundStyle(skin.playText)
         }
         .buttonStyle(PlayButtonStyle(skin: skin, scale: s))
-        .accessibilityLabel("Play quick match")
+        .accessibilityLabel("Play classic match")
     }
 }
 

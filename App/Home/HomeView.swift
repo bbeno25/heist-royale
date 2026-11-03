@@ -2,13 +2,14 @@ import SwiftUI
 
 /// The home screen: the player's thief and police on stage in front of downtown, with the logo on
 /// top, menu buttons down both sides and PLAY at the bottom. Downtown follows the device clock
-/// (morning, evening or night). None of the buttons do anything yet.
+/// (morning, evening or night). Only PLAY does something so far: it starts a sample match.
 struct HomeView: View {
     var player = PlayerSummary.sample
+    var onPlay: () -> Void = {}
 
     var body: some View {
         TimelineView(.everyMinute) { timeline in
-            HomeScene(time: TimeOfDay(date: timeline.date), player: player)
+            HomeScene(time: TimeOfDay(date: timeline.date), player: player, onPlay: onPlay)
         }
     }
 }
@@ -16,6 +17,7 @@ struct HomeView: View {
 private struct HomeScene: View {
     let time: TimeOfDay
     let player: PlayerSummary
+    let onPlay: () -> Void
 
     private static let design = CGSize(width: 393, height: 852)
 
@@ -26,7 +28,7 @@ private struct HomeScene: View {
                 DowntownBackdrop(time: time, placement: stage.backdrop(screen: geometry.size, anchorY: 556))
                     .id(time)
                     .transition(.opacity)
-                HomeStage(skin: HomeSkin(time), player: player)
+                HomeStage(skin: HomeSkin(time), player: player, onPlay: onPlay)
                     .environment(\.stageScale, stage.scale)
                     .frame(width: stage.size.width, height: stage.size.height, alignment: .topLeading)
                     .offset(x: stage.origin.x, y: stage.origin.y)
@@ -41,6 +43,7 @@ private struct HomeScene: View {
 private struct HomeStage: View {
     let skin: HomeSkin
     let player: PlayerSummary
+    let onPlay: () -> Void
 
     @Environment(\.stageScale) private var scale
 
@@ -98,7 +101,7 @@ private struct HomeStage: View {
             ModeSelector(skin: skin)
                 .offset(x: 62 * s, y: 648 * s)
 
-            PlayButton(skin: skin)
+            PlayButton(skin: skin, action: onPlay)
                 .offset(x: 44 * s, y: 708 * s)
         }
     }

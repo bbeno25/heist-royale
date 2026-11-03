@@ -31,6 +31,14 @@ SIMCTL_CHILD_TZ=Asia/Tokyo xcrun simctl launch booted com.benostudio.heistroyale
 
 The home scenery and logos are drawn in code from the design files; characters and game icons are SVGs in `App/Assets.xcassets`. Fonts (Bungee, Fredoka, Nunito Sans, Baloo 2; OFL) live in `App/Fonts` and are registered through `UIAppFonts`.
 
+## Match screens
+
+- PLAY on home opens a Classic sample match against a bot (best of 8, first to 5): coin flip, role reveal, rounds, round result with a 3D replay, series scoreboard and match end. `App/Match/SampleRound.swift` is a stand-in rules engine; the real one is HeistCore's `Round`, which the app moves to when it goes online. Don't grow the stand-in. Until then the app's own `Role`, `CardID` and similar types shadow HeistCore's.
+- The board is a live RealityKit scene (`App/Match/Board3D`) built to match the design's 3D renders; meeple tokens and card faces are the design's renders (`Assets.xcassets/Renders`). Tags, taps and VoiceOver sit on top using the same camera maths (`BoardCamera`).
+- Don't put `accessibilityChildren` (or similar synthesised-accessibility modifiers) on a container around the RealityView: it stops the 3D view from getting a drawable and the board renders blank.
+- Only one board RealityView at a time: one created while another is still in the view tree (e.g. fading out) gets no drawables and stays blank. `LiveBoards` counts them; the round result's replay waits for the round's board to leave.
+- Debug launch arguments: `-openMatch YES` (straight into a match), `-matchRole thief|police`, `-matchTimerScale 6` (slower timers for testing), `-matchTurns 3` (short chase), `-matchRounds 2` (short series), `-matchJumpToResult YES` (skip to round 1's result).
+
 ## Settings
 
 - Minimum iOS 26, iPhone only, portrait. Swift 6 language mode.
