@@ -1,0 +1,498 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		091D480E0045ECBF0EF59504 /* HomeControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7027AD0341D515F6A0F48C5F /* HomeControls.swift */; };
+		119FDEE941A6AC72D356DED1 /* HomeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8B42FD953824D75101C53D /* HomeTheme.swift */; };
+		13C41125C057AB3028352C59 /* LineLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */; };
+		39253CBF42EB593945BD584B /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF62DAEE396CFB0297F07F87 /* Brand.swift */; };
+		4514E5DC92B03C32AAF712A1 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D5BCA8761D90345554C50ED /* RootView.swift */; };
+		49A49324D95E83F1BE96553E /* NunitoSans-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4B261C51196B7702E66D7D2F /* NunitoSans-OFL.txt */; };
+		514AAEEAABA1D42E812E9D3C /* LaunchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C58320F16EA20F52C3132763 /* LaunchModel.swift */; };
+		57114217358FF239E6AF8925 /* Fredoka.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B69C6A0F01CEF2F1AC10A7C2 /* Fredoka.ttf */; };
+		6339F15BC2967678A41152D7 /* Fredoka-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 7D8E620E4EB93EE98F765F0B /* Fredoka-OFL.txt */; };
+		70B596B4A13972700CAAEE12 /* ServerSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2DDDCD1FA447E0E1403D507 /* ServerSync.swift */; };
+		783636E985B1D8D19A427B55 /* Baloo2.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2F5035F93512A5C51321C527 /* Baloo2.ttf */; };
+		8280F1D2377AC209D1638014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ECE2966AAA2086B0247FAE99 /* Assets.xcassets */; };
+		99EFEE57DB2439025CAD980D /* SVGPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FE35DE0D9E4B2EFEE37BEC /* SVGPath.swift */; };
+		A3E620A9366B1C2AE084FE0E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09943C9D26FA4CF2FE92FCC /* HomeView.swift */; };
+		A7776E879AFECD351574ECD8 /* HeistCore in Frameworks */ = {isa = PBXBuildFile; productRef = AD37DB1A6E01625D74BFDACF /* HeistCore */; };
+		AA666ADB02031349C512330F /* NunitoSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 24BE5C525184EB0A80B493FC /* NunitoSans.ttf */; };
+		AB3E41CD59095354518F473D /* Stage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F29D5AF7FC48BFE346FF8FA /* Stage.swift */; };
+		AD279C2011266EBA3EA2ED59 /* Bungee-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = EE220162BADE3ECBB1AB0B9E /* Bungee-OFL.txt */; };
+		AE1B3906CF0849FA90321719 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6CF2E3991CA1638BBE4518 /* SplashView.swift */; };
+		C1F7B1E8D5F9B6545ACBD966 /* DowntownBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = C083362C94F1A31F773F5C98 /* DowntownBackdrop.swift */; };
+		C4E933CDB3A7D5462ECF546F /* Baloo2-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 512C599DCBE0BC0ADF18C236 /* Baloo2-OFL.txt */; };
+		DDD7E24D855669C4AA3B5F42 /* Wordmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8962F63C98B416452B8981 /* Wordmark.swift */; };
+		E2530C53AE4C87D710DEB77F /* Bungee-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 007508959678E025F77DF904 /* Bungee-Regular.ttf */; };
+		EB12A3C3445C26784F5E0E90 /* StackedLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F42B3955088EE91B848D002A /* StackedLogo.swift */; };
+		F64B070F0995523B43055428 /* HeistRoyaleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F674974AD88E08482DD9B8 /* HeistRoyaleApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		007508959678E025F77DF904 /* Bungee-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Bungee-Regular.ttf"; sourceTree = "<group>"; };
+		079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineLogo.swift; sourceTree = "<group>"; };
+		24BE5C525184EB0A80B493FC /* NunitoSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = NunitoSans.ttf; sourceTree = "<group>"; };
+		2F29D5AF7FC48BFE346FF8FA /* Stage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stage.swift; sourceTree = "<group>"; };
+		2F5035F93512A5C51321C527 /* Baloo2.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Baloo2.ttf; sourceTree = "<group>"; };
+		3A6CF2E3991CA1638BBE4518 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		3B28D9C25403BABF3ECD5191 /* HeistRoyale.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HeistRoyale.entitlements; sourceTree = "<group>"; };
+		4B261C51196B7702E66D7D2F /* NunitoSans-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "NunitoSans-OFL.txt"; sourceTree = "<group>"; };
+		512C599DCBE0BC0ADF18C236 /* Baloo2-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Baloo2-OFL.txt"; sourceTree = "<group>"; };
+		610687B682AAC6EC69E65A07 /* HeistRoyale.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HeistRoyale.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6E8962F63C98B416452B8981 /* Wordmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Wordmark.swift; sourceTree = "<group>"; };
+		7027AD0341D515F6A0F48C5F /* HomeControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeControls.swift; sourceTree = "<group>"; };
+		7D8E620E4EB93EE98F765F0B /* Fredoka-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Fredoka-OFL.txt"; sourceTree = "<group>"; };
+		8D5BCA8761D90345554C50ED /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		91FCF1A331423932B8CC4C7E /* HeistCore */ = {isa = PBXFileReference; lastKnownFileType = folder; path = HeistCore; sourceTree = SOURCE_ROOT; };
+		97F674974AD88E08482DD9B8 /* HeistRoyaleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeistRoyaleApp.swift; sourceTree = "<group>"; };
+		A7ABB5D01A39457533238B1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B4FE35DE0D9E4B2EFEE37BEC /* SVGPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGPath.swift; sourceTree = "<group>"; };
+		B69C6A0F01CEF2F1AC10A7C2 /* Fredoka.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Fredoka.ttf; sourceTree = "<group>"; };
+		C083362C94F1A31F773F5C98 /* DowntownBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DowntownBackdrop.swift; sourceTree = "<group>"; };
+		C58320F16EA20F52C3132763 /* LaunchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchModel.swift; sourceTree = "<group>"; };
+		CF8B42FD953824D75101C53D /* HomeTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTheme.swift; sourceTree = "<group>"; };
+		D09943C9D26FA4CF2FE92FCC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		E2DDDCD1FA447E0E1403D507 /* ServerSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSync.swift; sourceTree = "<group>"; };
+		ECE2966AAA2086B0247FAE99 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EE220162BADE3ECBB1AB0B9E /* Bungee-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Bungee-OFL.txt"; sourceTree = "<group>"; };
+		EF62DAEE396CFB0297F07F87 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
+		F42B3955088EE91B848D002A /* StackedLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackedLogo.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4C0BA3B719FFD2460F410914 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A7776E879AFECD351574ECD8 /* HeistCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		037A08538FEA2201746BC054 /* Launch */ = {
+			isa = PBXGroup;
+			children = (
+				C58320F16EA20F52C3132763 /* LaunchModel.swift */,
+				E2DDDCD1FA447E0E1403D507 /* ServerSync.swift */,
+				3A6CF2E3991CA1638BBE4518 /* SplashView.swift */,
+			);
+			path = Launch;
+			sourceTree = "<group>";
+		};
+		04796158C5D900C8FE512287 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				91FCF1A331423932B8CC4C7E /* HeistCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		31565EDEB6189113D7521B31 /* Brand */ = {
+			isa = PBXGroup;
+			children = (
+				EF62DAEE396CFB0297F07F87 /* Brand.swift */,
+				079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */,
+				F42B3955088EE91B848D002A /* StackedLogo.swift */,
+				6E8962F63C98B416452B8981 /* Wordmark.swift */,
+			);
+			path = Brand;
+			sourceTree = "<group>";
+		};
+		48CBD35BDE7FBAB24E69D954 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				610687B682AAC6EC69E65A07 /* HeistRoyale.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		79D5ED5245E9625B28E6BB4E /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				512C599DCBE0BC0ADF18C236 /* Baloo2-OFL.txt */,
+				2F5035F93512A5C51321C527 /* Baloo2.ttf */,
+				EE220162BADE3ECBB1AB0B9E /* Bungee-OFL.txt */,
+				007508959678E025F77DF904 /* Bungee-Regular.ttf */,
+				7D8E620E4EB93EE98F765F0B /* Fredoka-OFL.txt */,
+				B69C6A0F01CEF2F1AC10A7C2 /* Fredoka.ttf */,
+				4B261C51196B7702E66D7D2F /* NunitoSans-OFL.txt */,
+				24BE5C525184EB0A80B493FC /* NunitoSans.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		7AF46AB40A30D43642C7531F /* App */ = {
+			isa = PBXGroup;
+			children = (
+				ECE2966AAA2086B0247FAE99 /* Assets.xcassets */,
+				3B28D9C25403BABF3ECD5191 /* HeistRoyale.entitlements */,
+				97F674974AD88E08482DD9B8 /* HeistRoyaleApp.swift */,
+				A7ABB5D01A39457533238B1A /* Info.plist */,
+				8D5BCA8761D90345554C50ED /* RootView.swift */,
+				31565EDEB6189113D7521B31 /* Brand */,
+				79D5ED5245E9625B28E6BB4E /* Fonts */,
+				BDDB740300DA0C0C372F4785 /* Graphics */,
+				B36F3BFEABD8DB1090F35BF3 /* Home */,
+				037A08538FEA2201746BC054 /* Launch */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		B36F3BFEABD8DB1090F35BF3 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				C083362C94F1A31F773F5C98 /* DowntownBackdrop.swift */,
+				7027AD0341D515F6A0F48C5F /* HomeControls.swift */,
+				CF8B42FD953824D75101C53D /* HomeTheme.swift */,
+				D09943C9D26FA4CF2FE92FCC /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		BDDB740300DA0C0C372F4785 /* Graphics */ = {
+			isa = PBXGroup;
+			children = (
+				2F29D5AF7FC48BFE346FF8FA /* Stage.swift */,
+				B4FE35DE0D9E4B2EFEE37BEC /* SVGPath.swift */,
+			);
+			path = Graphics;
+			sourceTree = "<group>";
+		};
+		D62EEE0031566D3EF1FA66C3 = {
+			isa = PBXGroup;
+			children = (
+				7AF46AB40A30D43642C7531F /* App */,
+				04796158C5D900C8FE512287 /* Packages */,
+				48CBD35BDE7FBAB24E69D954 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		47A53C80C32FB43B6F6FCEBF /* HeistRoyale */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7FB3AE6248A79F7CE7EA43AA /* Build configuration list for PBXNativeTarget "HeistRoyale" */;
+			buildPhases = (
+				32BE6C257C3E46E2D80AD4BF /* Sources */,
+				DE5141182197F32DAEE87023 /* Resources */,
+				4C0BA3B719FFD2460F410914 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HeistRoyale;
+			packageProductDependencies = (
+				AD37DB1A6E01625D74BFDACF /* HeistCore */,
+			);
+			productName = HeistRoyale;
+			productReference = 610687B682AAC6EC69E65A07 /* HeistRoyale.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5785E62459744CFDFC2C3EBA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					47A53C80C32FB43B6F6FCEBF = {
+						DevelopmentTeam = TNBCR36YPJ;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 2B83F1CCE8DE67C5654FF8DA /* Build configuration list for PBXProject "HeistRoyale" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D62EEE0031566D3EF1FA66C3;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				91E281270080A3C15A0D13C9 /* XCLocalSwiftPackageReference "HeistCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 48CBD35BDE7FBAB24E69D954 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				47A53C80C32FB43B6F6FCEBF /* HeistRoyale */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DE5141182197F32DAEE87023 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8280F1D2377AC209D1638014 /* Assets.xcassets in Resources */,
+				C4E933CDB3A7D5462ECF546F /* Baloo2-OFL.txt in Resources */,
+				783636E985B1D8D19A427B55 /* Baloo2.ttf in Resources */,
+				AD279C2011266EBA3EA2ED59 /* Bungee-OFL.txt in Resources */,
+				E2530C53AE4C87D710DEB77F /* Bungee-Regular.ttf in Resources */,
+				6339F15BC2967678A41152D7 /* Fredoka-OFL.txt in Resources */,
+				57114217358FF239E6AF8925 /* Fredoka.ttf in Resources */,
+				49A49324D95E83F1BE96553E /* NunitoSans-OFL.txt in Resources */,
+				AA666ADB02031349C512330F /* NunitoSans.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		32BE6C257C3E46E2D80AD4BF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				39253CBF42EB593945BD584B /* Brand.swift in Sources */,
+				C1F7B1E8D5F9B6545ACBD966 /* DowntownBackdrop.swift in Sources */,
+				F64B070F0995523B43055428 /* HeistRoyaleApp.swift in Sources */,
+				091D480E0045ECBF0EF59504 /* HomeControls.swift in Sources */,
+				119FDEE941A6AC72D356DED1 /* HomeTheme.swift in Sources */,
+				A3E620A9366B1C2AE084FE0E /* HomeView.swift in Sources */,
+				514AAEEAABA1D42E812E9D3C /* LaunchModel.swift in Sources */,
+				13C41125C057AB3028352C59 /* LineLogo.swift in Sources */,
+				4514E5DC92B03C32AAF712A1 /* RootView.swift in Sources */,
+				99EFEE57DB2439025CAD980D /* SVGPath.swift in Sources */,
+				70B596B4A13972700CAAEE12 /* ServerSync.swift in Sources */,
+				AE1B3906CF0849FA90321719 /* SplashView.swift in Sources */,
+				EB12A3C3445C26784F5E0E90 /* StackedLogo.swift in Sources */,
+				AB3E41CD59095354518F473D /* Stage.swift in Sources */,
+				DDD7E24D855669C4AA3B5F42 /* Wordmark.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1D4F80023D3A7AABD07864CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/HeistRoyale.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Heist Royale";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.benostudio.heistroyale;
+				PRODUCT_NAME = HeistRoyale;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		2209978AD454911CE0E0BD84 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = TNBCR36YPJ;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		A0196D301E514E402D1C9F5A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/HeistRoyale.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Heist Royale";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.strategy-games";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.benostudio.heistroyale;
+				PRODUCT_NAME = HeistRoyale;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		BCB7F367600640CC91FD6F67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = TNBCR36YPJ;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2B83F1CCE8DE67C5654FF8DA /* Build configuration list for PBXProject "HeistRoyale" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BCB7F367600640CC91FD6F67 /* Debug */,
+				2209978AD454911CE0E0BD84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7FB3AE6248A79F7CE7EA43AA /* Build configuration list for PBXNativeTarget "HeistRoyale" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0196D301E514E402D1C9F5A /* Debug */,
+				1D4F80023D3A7AABD07864CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		91E281270080A3C15A0D13C9 /* XCLocalSwiftPackageReference "HeistCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = HeistCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AD37DB1A6E01625D74BFDACF /* HeistCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HeistCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 5785E62459744CFDFC2C3EBA /* Project object */;
+}

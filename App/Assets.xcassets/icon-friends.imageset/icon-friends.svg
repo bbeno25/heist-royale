@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="giFrA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD0FF"/><stop offset="1" stop-color="#1F5FD0"/></linearGradient>
+        <linearGradient id="giFrB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFCB8A"/><stop offset="1" stop-color="#E0701A"/></linearGradient>
+      </defs>
+      <ellipse cx="32" cy="59" rx="22" ry="3" fill="#000000" opacity="0.28"/>
+      <path d="M29 55 C29 42 35 35 43 35 C51 35 57 42 57 55 Z" fill="url(#giFrB)" stroke="#A54A0E" stroke-width="1.2"/>
+      <path d="M35 15 L33 7 L39 11 Z M51 15 L53 7 L47 11 Z" fill="#E0701A"/>
+      <circle cx="43" cy="21" r="9.5" fill="url(#giFrB)" stroke="#A54A0E" stroke-width="1.2"/>
+      <ellipse cx="40" cy="17.5" rx="3.6" ry="2.2" fill="#FFFFFF" opacity="0.55"/>
+      <path d="M7 57 C7 43 14 36 24 36 C34 36 41 43 41 57 Z" fill="url(#giFrA)" stroke="#143E8C" stroke-width="1.2"/>
+      <path d="M13 22 C9 22 8 32 13 34 Z M35 22 C39 22 40 32 35 34 Z" fill="#1F5FD0"/>
+      <circle cx="24" cy="24" r="11.5" fill="url(#giFrA)" stroke="#143E8C" stroke-width="1.2"/>
+      <ellipse cx="20" cy="19.5" rx="4.6" ry="2.6" fill="#FFFFFF" opacity="0.55"/>
+      <path d="M13 42 C15 39 18 38 21 38" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+      <path d="M53 4.5 c-2.2-3.4-7.2-1.2-4.6 2.6 l4.6 4.8 l4.6-4.8 c2.6-3.8-2.4-6-4.6-2.6z" fill="#FF5F7E" stroke="#FFFFFF" stroke-width="1"/>
+    </svg>

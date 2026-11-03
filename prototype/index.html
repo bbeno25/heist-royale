@@ -1,0 +1,1995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heist Royale — prototype</title>
+<style>
+:root {
+  --bg: #0c0f16;
+  --panel: #141925;
+  --panel-2: #1b2130;
+  --line: #273046;
+  --text: #e7eaf1;
+  --muted: #8a93a8;
+  --thief: #ff8a4c;
+  --police: #4ea8ff;
+  --gold: #f5c542;
+  --exit: #3ddc97;
+  --danger: #ff5470;
+  --event: #c3a6ff;
+  --wall: #d9b27c;
+  --wall-map: #8f98ab;
+  --cell-vis: #2a3347;
+  --cell-mem: #171c28;
+  --role: #dfe4ee;
+  color-scheme: dark;
+}
+body[data-role="thief"] { --role: var(--thief); }
+body[data-role="police"] { --role: var(--police); }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body { font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button { font: inherit; color: inherit; }
+
+.app { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; padding: 24px 16px; max-width: 1120px; margin: 0 auto; }
+
+/* ---------- Hex board (SVG) ---------- */
+.board-frame { width: min(680px, calc(100vw - 32px)); flex: 0 0 auto; }
+#board { display: block; width: 100%; height: auto; max-height: calc(100vh - 48px); overflow: visible; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+#board text { pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+.row-label { font-size: 11px; font-weight: 600; fill: var(--muted); }
+
+.hex .base { fill: url(#fog); stroke: var(--bg); stroke-width: 2.5; transition: fill .15s; }
+.hex.vis .base { fill: var(--cell-vis); }
+.hex.mem .base { fill: var(--cell-mem); }
+.tint { pointer-events: none; stroke: none; }
+.tint.bush { fill: rgba(70, 175, 100, .22); }
+.tint.rock { fill: rgba(150, 125, 95, .32); }
+.hex .ring { fill: none; stroke: none; stroke-width: 2; }
+.hex.can-move, .hex.target { cursor: pointer; }
+.hex.can-move .ring { stroke: color-mix(in srgb, var(--role) 50%, transparent); }
+.hex.can-move:hover .base { fill: color-mix(in srgb, var(--role) 22%, var(--cell-vis)); }
+.hex.mid .base { fill: color-mix(in srgb, var(--role) 16%, var(--cell-vis)); }
+.hex.planned .base { fill: color-mix(in srgb, var(--role) 34%, var(--cell-vis)); }
+.hex.planned .ring { stroke: var(--role); stroke-width: 2.5; }
+.hex.target .ring { stroke: var(--gold); stroke-width: 2; stroke-dasharray: 4 3; }
+.hex.target:hover .base { fill: color-mix(in srgb, var(--gold) 25%, var(--cell-vis)); }
+.hex.stuck .ring { stroke: var(--danger); stroke-width: 2.5; stroke-dasharray: 4 3; }
+.hex.caught .base { fill: color-mix(in srgb, var(--danger) 25%, var(--cell-vis)); }
+.hex.caught .ring { stroke: var(--danger); stroke-width: 3.5; }
+.hex.escaped .base { fill: color-mix(in srgb, var(--exit) 22%, var(--cell-vis)); }
+.hex.escaped .ring { stroke: var(--exit); stroke-width: 3.5; }
+
+.coord { font: 600 7px ui-monospace, monospace; fill: var(--muted); opacity: .45; }
+.hex.dark .coord { opacity: .25; }
+.piece { font-size: 26px; }
+.mini { font-size: 12px; }
+.bg-emoji { font-size: 34px; opacity: .3; }
+.hex.vis .bg-emoji { opacity: .42; }
+.piece.me { filter: drop-shadow(0 0 4px var(--role)); }
+.ghost { opacity: .38; }
+.smoked { opacity: .55; }
+.looted { opacity: .25; filter: grayscale(1); }
+.pending { opacity: .6; }
+.hex:not(.vis) .item { opacity: .75; }
+.start { font: 800 8px ui-sans-serif, system-ui; opacity: .8; }
+.start.thief { fill: var(--thief); }
+.start.police { fill: var(--police); }
+.badge { font: 700 8px ui-monospace, monospace; fill: var(--muted); }
+.tnum { font: 800 9px ui-sans-serif, system-ui; fill: var(--gold); }
+
+.wall { stroke: var(--wall); stroke-width: 6; stroke-linecap: round; }
+.wall.map { stroke: var(--wall-map); }
+.wall.pending { stroke: var(--role); stroke-dasharray: 5 5; }
+.wall.smash { stroke: var(--danger); stroke-dasharray: 4 4; }
+.edge-target { cursor: pointer; }
+.edge-target .hit { stroke: transparent; stroke-width: 14; stroke-linecap: round; pointer-events: stroke; }
+.edge-target .show { stroke: var(--gold); stroke-width: 2.5; stroke-dasharray: 3 4; stroke-linecap: round; opacity: .6; pointer-events: none; }
+.edge-target:hover .show { stroke-width: 6; stroke-dasharray: none; opacity: 1; }
+.path { fill: none; stroke: var(--role); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.path.jump { stroke-dasharray: 2 6; }
+.compass { stroke: var(--gold); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 6 4; }
+.compass-dot { fill: var(--gold); }
+.compass-num { font: 800 10px ui-sans-serif, system-ui; fill: #1a1405; }
+.hint-ring { fill: none; stroke: var(--gold); stroke-width: 2; stroke-dasharray: 5 6; opacity: .75; }
+
+/* ---------- Panel ---------- */
+.panel { flex: 1 1 300px; max-width: 380px; display: flex; flex-direction: column; gap: 12px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.role-head { display: flex; align-items: center; gap: 12px; }
+.role-icon { font-size: 34px; line-height: 1; }
+.role-name { font-weight: 700; font-size: 18px; color: var(--role); letter-spacing: .02em; }
+.turn { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.turn b { font-size: 20px; }
+.goal { margin-top: 10px; }
+.chips { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.chip { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 12.5px; color: var(--muted); }
+.chip b { color: var(--text); font-weight: 600; }
+.chip.alert { border-color: var(--danger); color: var(--text); }
+.chip.fx { border-color: var(--event); color: var(--text); }
+.box-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 600; margin-bottom: 10px; }
+.muted { color: var(--muted); font-weight: 400; }
+.small { font-size: 12.5px; }
+
+.news { border-color: color-mix(in srgb, var(--event) 45%, var(--line)); background: color-mix(in srgb, var(--event) 6%, var(--panel)); display: grid; gap: 6px; font-size: 13.5px; }
+.news-item.alert { color: #ffb0bd; }
+.news-item.event { color: #d6c6ff; }
+
+.pw-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.pw { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 7px 2px 6px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; min-width: 0; }
+.pw:hover:not(:disabled) { border-color: var(--gold); }
+.pw .pw-icon { font-size: 21px; line-height: 1.15; }
+.pw .pw-name { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.pw .pw-count { font-size: 11px; color: var(--muted); }
+.pw.on { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, var(--panel-2)); }
+.pw:disabled { opacity: .28; cursor: default; }
+.pw-status { margin-top: 9px; font-size: 13px; color: var(--muted); }
+.pw-status b { color: var(--text); }
+
+.hexpad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 10px; }
+.hexpad button { grid-column: span 2; height: 42px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; font-size: 18px; }
+.hexpad button:hover:not(:disabled) { border-color: var(--role); }
+.hexpad button.sel { background: color-mix(in srgb, var(--role) 30%, var(--panel-2)); border-color: var(--role); }
+.hexpad button:disabled { opacity: .22; cursor: default; }
+.hexpad .wait { font-size: 13px; font-weight: 600; }
+.hexpad .indent { grid-column: 2 / span 2; }
+
+.primary { width: 100%; padding: 12px 16px; border-radius: 10px; border: 0; background: var(--role); color: #0b0e14; font-weight: 700; cursor: pointer; }
+.primary:disabled { opacity: .3; cursor: default; }
+.secondary { width: 100%; padding: 11px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); font-weight: 600; cursor: pointer; }
+.link-btn { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; color: var(--muted); font-size: 13px; }
+.link-btn:hover, .secondary:hover { border-color: var(--muted); color: var(--text); }
+.hint { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+kbd { font: 600 10.5px ui-monospace, monospace; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+
+.log { max-height: 240px; overflow: auto; display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; }
+.entry { color: var(--muted); display: flex; gap: 8px; }
+.entry.fresh { color: var(--text); }
+.entry.move { opacity: .65; }
+.entry.power span:last-child { color: var(--gold); }
+.entry.alert span:last-child { color: #ff9aac; }
+.entry.event span:last-child { color: var(--event); }
+.entry .t { flex: 0 0 34px; font: 600 11px/1.9 ui-monospace, monospace; color: var(--muted); }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.toggle { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-row .link-btn { grid-column: 1 / -1; }
+
+.result h2 { margin: 2px 0 4px; font-size: 22px; }
+.result p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--role); }
+.replay { display: flex; align-items: center; gap: 6px; }
+.replay input[type=range] { flex: 1; min-width: 0; accent-color: var(--role); }
+.replay button { min-width: 36px; height: 32px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; padding: 0 8px; font-size: 13px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.swatch { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* ---------- Overlay (menu + pass screen) ---------- */
+.overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px 16px; overflow: auto; background: rgba(7,9,14,.97); }
+.overlay[hidden] { display: none; }
+.card { width: 100%; max-width: 620px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 24px; }
+.card h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: -.01em; }
+.lead { color: var(--muted); margin: 0 0 18px; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg button { padding: 12px 8px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; text-align: center; font-size: 13.5px; font-weight: 600; }
+.seg button span { display: block; }
+.seg button .em { font-size: 24px; margin-bottom: 4px; }
+.seg button .sub { font-weight: 400; color: var(--muted); font-size: 12px; }
+.seg button.on { border-color: var(--text); background: #232b3d; }
+details { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--panel-2); }
+summary { cursor: pointer; font-weight: 600; }
+details ul { margin: 10px 0 2px; padding-left: 20px; color: var(--muted); }
+details li { margin: 4px 0; }
+details li b { color: var(--text); }
+.pw-list { display: grid; gap: 10px; margin-top: 12px; }
+.pw-item { display: flex; gap: 12px; align-items: flex-start; }
+.pw-item .pw-icon { font-size: 22px; line-height: 1.2; flex: 0 0 26px; text-align: center; }
+.who { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-left: 6px; }
+.who.thief { color: var(--thief); } .who.police { color: var(--police); } .who.both { color: var(--gold); } .who.event { color: var(--event); }
+.settings-grid { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; margin-top: 12px; }
+.set-group { grid-column: 1 / -1; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.set-group:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+.settings-grid input[type=number] { width: 72px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+.settings-grid input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--police); justify-self: end; }
+.set-label small { display: block; color: var(--muted); font-size: 12px; }
+.sim { margin-top: 10px; font-size: 13.5px; }
+.menu-actions { display: grid; gap: 8px; margin-top: 18px; }
+.cover { text-align: center; max-width: 440px; }
+.cover-icon { font-size: 76px; line-height: 1.1; }
+.cover h2 { margin: 6px 0 4px; font-size: 26px; color: var(--role); }
+.cover p { margin: 0 0 20px; color: var(--muted); }
+
+@media (max-width: 560px) {
+  .seg { grid-template-columns: 1fr; gap: 6px; }
+  .seg button { display: grid; grid-template-columns: 36px 1fr; align-items: center; text-align: left; padding: 8px 12px; column-gap: 8px; }
+  .seg button .em { grid-row: span 2; margin: 0; font-size: 22px; text-align: center; }
+  .card { padding: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="board-frame"><svg id="board" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <aside class="panel" id="panel"></aside>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   CONFIG — every rule you might want to tweak while playtesting
+   ===================================================================== */
+const DEFAULT_CFG = {
+  // board
+  radius: 4,          // hexagon board radius: 4 → 61 tiles (about the same as 8×8)
+  rocks: 6,           // impassable tiles
+  bushes: 6,          // tiles that hide whoever stands in them
+  mapWalls: 4,        // short wall pieces between tiles
+  tunnels: 1,         // tunnel pairs (step into one, come out of the other)
+  // rules
+  vision: 1,          // 1 = your tile + the 6 around it
+  maxTurns: 30,       // police wins if the thief hasn't escaped by then
+  chests: 2,
+  exits: 2,
+  lootToWin: 1,       // chests the thief must rob before an exit works
+  swapCatch: true,    // swapping tiles with each other counts as a catch
+  alarm: true,        // police is told when (and where) a chest is robbed
+  // surprises
+  spawnChance: 15,    // % chance each turn that a power-up box appears
+  maxBoxes: 2,        // max boxes lying on the map at once
+  boxSurprises: true, // some boxes hold two power-ups, some are booby-trapped
+  startPowers: 0,     // random power-ups each side starts with (handy for testing)
+  eventChance: 10,    // % chance each turn of a random event
+};
+
+const SETTINGS = [
+  { group: 'Board' },
+  { k: 'radius',      label: 'Board size',                type: 'num', min: 3, max: 6, hint: 'hexagon radius · 4 = 61 tiles (≈ 8×8)' },
+  { k: 'rocks',       label: 'Rocks 🪨',                  type: 'num', min: 0, max: 15, hint: 'tiles nobody can enter' },
+  { k: 'bushes',      label: 'Bushes 🌿',                 type: 'num', min: 0, max: 15, hint: "you can't be seen while inside one" },
+  { k: 'mapWalls',    label: 'Wall pieces',               type: 'num', min: 0, max: 10, hint: 'short walls between tiles' },
+  { k: 'tunnels',     label: 'Tunnel pairs 🕳️',           type: 'num', min: 0, max: 3, hint: 'step into one, come out of the other' },
+  { group: 'Rules' },
+  { k: 'vision',      label: 'Vision radius',             type: 'num', min: 0, max: 3, hint: '1 = the 6 tiles around you' },
+  { k: 'maxTurns',    label: 'Turn limit',                type: 'num', min: 5, max: 99 },
+  { k: 'chests',      label: 'Chests',                    type: 'num', min: 1, max: 4 },
+  { k: 'exits',       label: 'Exits',                     type: 'num', min: 1, max: 4 },
+  { k: 'lootToWin',   label: 'Chests needed to escape',   type: 'num', min: 0, max: 4 },
+  { k: 'swapCatch',   label: 'Catch when crossing paths', type: 'bool', hint: 'swapping tiles counts as a catch' },
+  { k: 'alarm',       label: 'Chest alarm',               type: 'bool', hint: 'police hears when a chest is robbed' },
+  { group: 'Surprises' },
+  { k: 'spawnChance', label: 'Power-up spawn chance',     type: 'num', min: 0, max: 100, hint: '% chance per turn' },
+  { k: 'maxBoxes',    label: 'Max power-ups on the map',  type: 'num', min: 0, max: 5 },
+  { k: 'boxSurprises',label: 'Surprise boxes',            type: 'bool', hint: 'some hold 2 power-ups, some explode' },
+  { k: 'startPowers', label: 'Starting power-ups',        type: 'num', min: 0, max: 4, hint: 'random, each side · good for testing' },
+  { k: 'eventChance', label: 'Random event chance',       type: 'num', min: 0, max: 100, hint: '% per turn: fog, tip-offs, supply drops…' },
+];
+
+const ROLES = {
+  thief:  { name: 'Thief',  icon: '🦹', other: 'police' },
+  police: { name: 'Police', icon: '👮', other: 'thief' },
+};
+const ICON = {
+  chest: '💰', exit: '🚪', box: '🎁', trap: '🪤', rock: '🪨', bush: '🌿', tunnel: '🕳️',
+  decoy: '🎭', net: '🕸️', lock: '🔒', scent: '🐾', smoke: '💨', hammer: '🔨',
+};
+
+// kind: instant = works right away while you plan · self = armed, happens before moving · target = pick a tile/edge
+const POWERS = {
+  compass:  { icon: '🧭', name: 'Compass',  kind: 'instant', who: 'thief',  desc: 'Points toward the nearest chest and tells you how far away it is.' },
+  wall:     { icon: '🧱', name: 'Wall',     kind: 'target',  who: 'thief',  desc: 'Build a wall between two tiles near you. Nobody can cross it.' },
+  smoke:    { icon: '💨', name: 'Smoke',    kind: 'self',    who: 'thief',  desc: "Vanish for 2 turns: the police can't see you even right next to you, and radar is jammed." },
+  decoy:    { icon: '🎭', name: 'Decoy',    kind: 'target',  who: 'thief',  desc: 'Leave a dummy of yourself on a tile next to you. To the police it looks exactly like you.' },
+  radar:    { icon: '📡', name: 'Radar',    kind: 'instant', who: 'police', desc: "Reveals the thief's exact location right now." },
+  dog:      { icon: '🐕', name: 'Dog',      kind: 'instant', who: 'police', desc: 'Sniffs out where the thief stood over the last 4 turns.' },
+  trap:     { icon: '🪤', name: 'Trap',     kind: 'target',  who: 'police', desc: "Hide a trap on a tile next to you. If the thief steps in, they can't move next turn." },
+  net:      { icon: '🕸️', name: 'Net',      kind: 'target',  who: 'police', desc: "Throw it at a tile up to 2 away. If the thief ends the turn there, they can't move next turn." },
+  lockdown: { icon: '🚨', name: 'Lockdown', kind: 'self',    who: 'police', desc: 'Seal every exit for 3 turns — this one and the next two.' },
+  run:      { icon: '👟', name: 'Run',      kind: 'self',    who: 'both',   desc: 'Take two steps this turn.' },
+  hammer:   { icon: '🔨', name: 'Hammer',   kind: 'target',  who: 'both',   desc: 'Smash a rock next to you, or a wall on the edge of your tile.' },
+};
+const POOL = {
+  thief:  ['compass', 'wall', 'smoke', 'decoy', 'run', 'hammer'],
+  police: ['radar', 'dog', 'trap', 'net', 'lockdown', 'run', 'hammer'],
+};
+
+const EVENTS = {
+  fog:      { icon: '🌫️', name: 'Thick fog',      desc: 'Everyone sees 1 tile less for 2 turns.' },
+  moon:     { icon: '🌕', name: 'Full moon',      desc: 'Everyone sees 1 tile further for 2 turns.' },
+  witness:  { icon: '👀', name: 'Witness',        desc: 'A tip-off tells the police roughly where the thief is.' },
+  scanner:  { icon: '📻', name: 'Police scanner', desc: 'The thief overhears roughly where the police is.' },
+  drop:     { icon: '📦', name: 'Supply drop',    desc: 'Two power-up boxes land at once.' },
+  collapse: { icon: '🏚️', name: 'Collapse',       desc: 'A wall and a rock somewhere on the map crumble.' },
+};
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const key = p => p.q + ',' + p.r;
+const unkey = k => { const [q, r] = k.split(',').map(Number); return { q, r }; };
+const eq = (a, b) => a.q === b.q && a.r === b.r;
+const add = (p, m) => ({ q: p.q + m.q, r: p.r + m.r });
+const pt = p => ({ q: p.q, r: p.r });
+const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const cap = s => s[0].toUpperCase() + s.slice(1);
+
+/* =====================================================================
+   HEX GEOMETRY — axial coords (q, r), pointy-top tiles, hexagon board
+   ===================================================================== */
+const hexLen = p => Math.max(Math.abs(p.q), Math.abs(p.r), Math.abs(p.q + p.r));
+const hexDist = (a, b) => hexLen({ q: a.q - b.q, r: a.r - b.r });
+const edgeKey = (a, b) => { const x = key(a), y = key(b); return x < y ? x + '|' + y : y + '|' + x; };
+
+function boardCells(R) {
+  const out = [];
+  for (let r = -R; r <= R; r++)
+    for (let q = Math.max(-R, -r - R); q <= Math.min(R, -r + R); q++) out.push({ q, r });
+  return out;
+}
+// Rows are lettered top→bottom, tiles numbered left→right inside each row.
+const nameOf = (R, p) => String.fromCharCode(65 + p.r + R) + (p.q - Math.max(-R, -p.r - R) + 1);
+const nm = (g, p) => nameOf(g.cfg.radius, p);
+const onBoard = (g, p) => hexLen(p) <= g.cfg.radius;
+const isBorder = (g, p) => hexLen(p) === g.cfg.radius;
+
+const SQ3 = Math.sqrt(3);
+const unitXY = p => ({ x: SQ3 * (p.q + p.r / 2), y: 1.5 * p.r });
+const COMPASS_WORDS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+const compassWord = c => COMPASS_WORDS[((Math.round(Math.atan2(c.dy, c.dx) / (Math.PI / 4)) % 8) + 8) % 8];
+
+/* ---------- moves ---------- */
+const WAIT = { q: 0, r: 0, name: 'wait', label: 'Wait' };
+const DIRS = [
+  { q: 0,  r: -1, name: 'north-west', label: '↖' },
+  { q: 1,  r: -1, name: 'north-east', label: '↗' },
+  { q: -1, r: 0,  name: 'west',       label: '←' },
+  { q: 1,  r: 0,  name: 'east',       label: '→' },
+  { q: -1, r: 1,  name: 'south-west', label: '↙' },
+  { q: 0,  r: 1,  name: 'south-east', label: '↘' },
+];
+const RING = ['east', 'north-east', 'north-west', 'west', 'south-west', 'south-east'];  // around a tile, in order
+const MOVES = [WAIT, ...DIRS];
+const moveByName = n => MOVES.find(m => m.name === n);
+const isWait = m => m.q === 0 && m.r === 0;
+const dirBetween = (a, b) => MOVES.find(m => a.q + m.q === b.q && a.r + m.r === b.r) || null;
+const neighbors = (g, p) => DIRS.map(d => add(p, d)).filter(n => onBoard(g, n));
+
+/* ---------- terrain ---------- */
+const isRock = (g, p) => g.rocks.has(key(p));
+const isBush = (g, p) => g.bushes.has(key(p));
+const passable = (g, p) => onBoard(g, p) && !isRock(g, p);
+const land = (g, p) => g.tunnels.get(key(p)) || p;                     // stepping into a tunnel pops you out of its twin
+const stepLand = (g, pos, m) => isWait(m) ? pos : land(g, add(pos, m));
+const tunnelNo = (g, p) => { const i = g.tunnelList.findIndex(([a, b]) => eq(a, p) || eq(b, p)); return i + 1; };
+
+/* ---------- vision ---------- */
+// "ref" = the turn whose end-state we're looking at (during planning that's g.turn - 1).
+const visionOf = (g, ref) => Math.max(0, g.cfg.vision + (g.fx.moon >= ref ? 1 : 0) - (g.fx.fog >= ref ? 1 : 0));
+const sees = (g, role, p, ref = g.turn - 1) => hexDist(g[role].pos, p) <= visionOf(g, ref);
+const hiddenNow = (g, role, ref = g.turn - 1) => isBush(g, g[role].pos) || (role === 'thief' && g.thief.smokeUntil >= ref);
+const seesOpp = (g, role, ref = g.turn - 1) => { const o = ROLES[role].other; return sees(g, role, g[o].pos, ref) && !hiddenNow(g, o, ref); };
+const visibleDecoys = (g, ref = g.turn - 1) => g.decoys.filter(d => sees(g, 'police', d, ref) && !isBush(g, d));
+
+// What blocks movement as each side *believes* it: the thief knows every wall, police only the ones it has seen.
+const wallKnown = (g, role, k) => role === 'police' ? g.police.knownWalls.has(k) : g.walls.has(k);
+// mods = changes from your own pending power-up (a wall you're building, a rock/wall you're smashing)
+function powerMods(pw) {
+  if (!pw) return null;
+  if (pw.type === 'wall') return { block: edgeKey(pw.a, pw.b) };
+  if (pw.type === 'hammer') return pw.cell ? { openCell: key(pw.cell) } : { openEdge: edgeKey(pw.a, pw.b) };
+  return null;
+}
+function legalMoves(g, role, pos, mods = null) {
+  return MOVES.filter(m => {
+    if (isWait(m)) return true;
+    const np = add(pos, m);
+    if (!onBoard(g, np)) return false;
+    if (isRock(g, np) && !(mods && mods.openCell === key(np))) return false;
+    const k = edgeKey(pos, np);
+    if (mods && mods.block === k) return false;
+    if (mods && mods.openEdge === k) return true;
+    return !wallKnown(g, role, k);
+  });
+}
+function walkDetail(g, pos, steps) {
+  const out = [];
+  let p = pos;
+  for (const m of steps) {
+    if (isWait(m)) { out.push({ from: p, enter: p, land: p, wait: true }); continue; }
+    const enter = add(p, m), l = land(g, enter);
+    out.push({ from: p, enter, land: l, wait: false });
+    p = l;
+  }
+  return out;
+}
+const walk = (g, pos, steps) => walkDetail(g, pos, steps).map(d => d.land);
+const pathEnd = (g, pos, steps) => { const w = walk(g, pos, steps); return w.length ? w[w.length - 1] : pos; };
+
+/* =====================================================================
+   MAP GENERATION — random, always fully connected
+   ===================================================================== */
+function placeCore(cfg, R, all, border) {
+  const place = (pool, count, ok) => {
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const options = pool.filter(c => !out.some(o => eq(o, c)) && ok(c, out));
+      if (!options.length) return null;
+      out.push(rand(options));
+    }
+    return out;
+  };
+  for (let slack = 0; slack <= 8; slack++) {
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const ts = rand(all), ps = rand(all);
+      if (eq(ts, ps) || hexDist(ts, ps) < R + 2 - slack) continue;
+      const free = c => !eq(c, ts) && !eq(c, ps);
+      const chests = place(all, cfg.chests, (c, got) =>
+        free(c) && hexDist(c, ts) >= R - slack && hexDist(c, ps) >= 2 - slack && got.every(o => hexDist(o, c) >= R - slack));
+      if (!chests) continue;
+      const exits = place(slack < 4 ? border : all, cfg.exits, (c, got) =>
+        free(c) && !chests.some(o => eq(o, c)) && chests.every(o => hexDist(o, c) >= R - slack) &&
+        hexDist(c, ts) >= R - 1 - slack && hexDist(c, ps) >= 2 - slack && got.every(o => hexDist(o, c) >= R - slack));
+      if (!exits) continue;
+      return { starts: { thief: ts, police: ps }, chests, exits };
+    }
+  }
+  const s = shuffle(all);
+  return { starts: { thief: s[0], police: s[1] }, chests: s.slice(2, 2 + cfg.chests), exits: s.slice(2 + cfg.chests, 2 + cfg.chests + cfg.exits) };
+}
+
+function isConnected(all, rockSet, wallSet) {
+  const open = all.filter(c => !rockSet.has(key(c)));
+  if (!open.length) return true;
+  const seen = new Set([key(open[0])]), queue = [open[0]];
+  for (let i = 0; i < queue.length; i++) {
+    for (const d of DIRS) {
+      const n = add(queue[i], d), k = key(n);
+      if (seen.has(k) || rockSet.has(k) || !all.some(c => eq(c, n)) || wallSet.has(edgeKey(queue[i], n))) continue;
+      seen.add(k); queue.push(n);
+    }
+  }
+  return seen.size === open.length;
+}
+
+function genMap(cfg) {
+  const R = cfg.radius, all = boardCells(R), border = all.filter(c => hexLen(c) === R);
+  const core = placeCore(cfg, R, all, border);
+  const special = [core.starts.thief, core.starts.police, ...core.chests, ...core.exits];
+  const isSpecial = c => special.some(s => eq(s, c));
+  const nearStart = (c, d) => hexDist(c, core.starts.thief) < d || hexDist(c, core.starts.police) < d;
+
+  for (let attempt = 0; attempt < 80; attempt++) {
+    const ease = Math.floor(attempt / 20);   // crowded board? place a bit less
+    const rocks = shuffle(all.filter(c => !isSpecial(c) && !nearStart(c, 2))).slice(0, Math.max(0, cfg.rocks - ease * 2));
+    const rockSet = new Set(rocks.map(key));
+    const open = c => hexLen(c) <= R && !rockSet.has(key(c));
+
+    // Wall pieces: 2–3 connected edges hugging one tile, like a ruined building corner.
+    const walls = [], wallSet = new Set();
+    for (let i = 0; i < Math.max(0, cfg.mapWalls - ease); i++) {
+      const c = rand(all.filter(x => open(x)));
+      const start = Math.floor(Math.random() * 6), len = Math.random() < .4 ? 3 : 2;
+      for (let j = 0; j < len; j++) {
+        const n = add(c, moveByName(RING[(start + j) % 6]));
+        if (!open(n)) continue;
+        const k = edgeKey(c, n);
+        if (!wallSet.has(k)) { wallSet.add(k); walls.push({ a: pt(c), b: pt(n) }); }
+      }
+    }
+    if (!isConnected(all, rockSet, wallSet)) continue;
+
+    const free = all.filter(c => open(c) && !isSpecial(c));
+    const bushes = shuffle(free).slice(0, cfg.bushes);
+    const bushSet = new Set(bushes.map(key));
+    let pool = free.filter(c => !bushSet.has(key(c)) && special.every(s => hexDist(s, c) >= 2));
+    const tunnels = [];
+    for (let i = 0; i < cfg.tunnels && pool.length >= 2; i++) {
+      const a = rand(pool);
+      const far = pool.filter(c => hexDist(c, a) >= R + 1);
+      const b = far.length ? rand(far) : rand(pool.filter(c => !eq(c, a)));
+      tunnels.push([pt(a), pt(b)]);
+      pool = pool.filter(c => hexDist(c, a) >= 2 && hexDist(c, b) >= 2);
+    }
+    return { ...core, rocks: rocks.map(pt), bushes: bushes.map(pt), walls, tunnels };
+  }
+  return { ...core, rocks: [], bushes: [], walls: [], tunnels: [] };
+}
+
+/* =====================================================================
+   GAME ENGINE — pure state; no DOM in here
+   ===================================================================== */
+const log = (side, turn, text, kind = '') => side.log.push({ turn, text, kind });
+const snapshot = g => g.history.push({
+  t: pt(g.thief.pos), p: pt(g.police.pos),
+  looted: g.chests.map(c => c.looted),
+  boxes: g.boxes.map(pt), traps: g.traps.map(pt), decoys: g.decoys.map(pt),
+  rocks: [...g.rocks],
+  walls: [...g.walls.values()].map(w => ({ a: w.a, b: w.b, map: !!w.map })),
+});
+
+function newSide(role, pos) {
+  return {
+    role, pos: pt(pos), path: [{ ...pt(pos), turn: 0 }], seen: new Set(),
+    lastSeenOpp: null, oppVisible: false, log: [], stuck: false,
+    items: Object.fromEntries(POOL[role].map(t => [t, 0])),
+    instantTurn: -1,     // turn an instant power-up was used (one power-up per turn)
+  };
+}
+
+function newGame(cfg, map) {
+  const c = { ...cfg, lootToWin: Math.min(cfg.lootToWin, map.chests.length) };
+  const g = {
+    cfg: c, cells: boardCells(c.radius),
+    starts: { thief: pt(map.starts.thief), police: pt(map.starts.police) },
+    chests: map.chests.map(p => ({ ...pt(p), looted: false })),
+    exits: map.exits.map(pt),
+    rocks: new Set(map.rocks.map(key)),
+    bushes: new Set(map.bushes.map(key)),
+    tunnelList: map.tunnels.map(([a, b]) => [pt(a), pt(b)]),
+    tunnels: new Map(),
+    walls: new Map(),   // edgeKey -> { a, b, turn, map }
+    traps: [],          // hidden from the thief
+    boxes: [],          // power-up boxes, visible to both
+    decoys: [],         // fake thieves
+    lockUntil: -1,      // exits sealed through this turn
+    fx: { fog: -1, moon: -1 },
+    turn: 1, over: null, history: [],
+    thief: newSide('thief', map.starts.thief),
+    police: newSide('police', map.starts.police),
+    ai: { thief: {}, police: { patrol: Math.floor(Math.random() * map.chests.length) } },
+    stats: { spawned: 0, used: 0, events: 0 },
+  };
+  for (const [a, b] of g.tunnelList) { g.tunnels.set(key(a), b); g.tunnels.set(key(b), a); }
+  for (const w of map.walls) g.walls.set(edgeKey(w.a, w.b), { a: pt(w.a), b: pt(w.b), turn: 0, map: true });
+  const T = g.thief, P = g.police;
+  T.loot = 0; T.knownChests = new Map(); T.compass = null; T.smokeUntil = -1;
+  P.chestState = g.chests.map(() => false); P.knownExits = new Set(); P.knownWalls = new Set(g.walls.keys()); P.scent = null;
+
+  const need = c.lootToWin;
+  log(T, 0, `You start on ${nm(g, T.pos)}. You know where the ${c.exits === 1 ? 'exit 🚪 is' : 'exits 🚪 are'}, but not the chests. ` +
+    (need ? `Find ${need === 1 ? 'a chest' : need + ' chests'} 💰, then escape.` : 'Reach an exit to escape.'));
+  log(P, 0, `You start on ${nm(g, P.pos)}. You know where the ${c.chests === 1 ? 'chest 💰 is' : 'chests 💰 are'}, but not the exits. ` +
+    `Catch the thief within ${c.maxTurns} turns.` + (c.alarm ? ' An alarm will tell you if a chest is robbed.' : ''));
+  for (const side of [T, P]) {
+    if (!c.startPowers) continue;
+    const got = [];
+    for (let i = 0; i < c.startPowers; i++) { const t = rand(POOL[side.role]); side.items[t]++; got.push(`${POWERS[t].icon} ${POWERS[t].name}`); }
+    log(side, 0, `You start with: ${got.join(', ')}.`, 'power');
+  }
+  updateVision(g, 0);
+  snapshot(g);
+  return g;
+}
+
+function updateVision(g, turn) {
+  const T = g.thief, P = g.police;
+  for (const role of ['thief', 'police'])
+    for (const c of g.cells) if (sees(g, role, c, turn)) g[role].seen.add(key(c));
+
+  g.chests.forEach((c, i) => {
+    if (sees(g, 'thief', c, turn)) {
+      if (!T.knownChests.has(i)) log(T, turn, c.looted ? `You found an empty chest on ${nm(g, c)}.` : `💰 You spotted a chest on ${nm(g, c)}!`);
+      T.knownChests.set(i, c.looted);
+    }
+    if (sees(g, 'police', c, turn)) {
+      if (c.looted && !P.chestState[i]) log(P, turn, `😱 The chest on ${nm(g, c)} has been emptied!`, 'alert');
+      P.chestState[i] = c.looted;
+    }
+  });
+  g.exits.forEach((e, i) => {
+    if (!P.knownExits.has(i) && sees(g, 'police', e, turn)) { P.knownExits.add(i); log(P, turn, `🚪 You discovered an exit on ${nm(g, e)}.`); }
+  });
+  for (const [k, w] of g.walls) {
+    if (!P.knownWalls.has(k) && (sees(g, 'police', w.a, turn) || sees(g, 'police', w.b, turn))) {
+      P.knownWalls.add(k);
+      log(P, turn, `🧱 You found a new wall between ${nm(g, w.a)} and ${nm(g, w.b)}.`);
+    }
+  }
+  // Police can't tell a decoy from the real thief.
+  sight(g, P, [...(seesOpp(g, 'police', turn) ? [T.pos] : []), ...visibleDecoys(g, turn)], 'thief', turn);
+  sight(g, T, seesOpp(g, 'thief', turn) ? [P.pos] : [], 'police', turn);
+}
+
+function sight(g, s, spots, oppRole, turn) {
+  const R = ROLES[oppRole];
+  if (spots.length) {
+    for (const p of spots.slice().sort((a, b) => key(a) < key(b) ? -1 : 1)) log(s, turn, `${R.icon} ${R.name} spotted on ${nm(g, p)}!`);
+    s.lastSeenOpp = { pos: pt(nearest(spots, s.pos)), turn };
+  } else if (s.oppVisible) {
+    log(s, turn, `You lost sight of the ${R.name.toLowerCase()}.`);
+  }
+  s.oppVisible = spots.length > 0;
+}
+
+function nearest(list, from) {
+  let best = null, bd = Infinity;
+  for (const p of list) { const d = hexDist(from, p) + Math.random() * .01; if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+
+/** Compass, Radar and Dog work instantly while you plan. Returns false if it couldn't be used. */
+function useInstant(g, role, type) {
+  const s = g[role];
+  if (g.over || POWERS[type].kind !== 'instant' || !s.items[type] || s.instantTurn === g.turn) return false;
+  s.items[type]--;
+  s.instantTurn = g.turn;
+  g.stats.used++;
+  if (type === 'radar') {
+    if (g.thief.smokeUntil >= g.turn - 1) { log(s, g.turn, '📡 Radar: nothing but static — something is jamming the signal.', 'power'); return true; }
+    const tp = g.thief.pos;
+    s.lastSeenOpp = { pos: pt(tp), turn: g.turn - 1, via: 'radar' };
+    log(s, g.turn, `📡 Radar ping: the thief is on ${nm(g, tp)}, ${plural(hexDist(s.pos, tp), 'tile')} away.`, 'power');
+  } else if (type === 'dog') {
+    const marks = [];
+    for (let t = g.turn - 2; t >= Math.max(0, g.turn - 5); t--) marks.push({ pos: pt(g.history[t].t), turn: t });
+    s.scent = { turn: g.turn, marks };
+    if (!marks.length) { log(s, g.turn, '🐕 The dog sniffs around — no trail to follow yet.', 'power'); return true; }
+    const newest = marks[0];
+    if (!s.lastSeenOpp || s.lastSeenOpp.turn < newest.turn) s.lastSeenOpp = { pos: pt(newest.pos), turn: newest.turn, via: 'dog' };
+    log(s, g.turn, `🐕 The dog picks up a trail: ${marks.slice().reverse().map(m => `${nm(g, m.pos)} (${m.turn ? 'T' + m.turn : 'start'})`).join(' → ')}.`, 'power');
+  } else if (type === 'compass') {
+    const left = g.chests.filter(c => !c.looted);
+    if (!left.length) { s.compass = null; log(s, g.turn, '🧭 The compass just spins — no chests are left.', 'power'); return true; }
+    const c = nearest(left, s.pos), A = unitXY(s.pos), B = unitXY(c);
+    const len = Math.hypot(B.x - A.x, B.y - A.y) || 1;
+    s.compass = { turn: g.turn, dx: (B.x - A.x) / len, dy: (B.y - A.y) / len, dist: hexDist(s.pos, c) };
+    log(s, g.turn, `🧭 Nearest chest: ${plural(s.compass.dist, 'tile')} away, to the ${compassWord(s.compass)}.`, 'power');
+  }
+  return true;
+}
+
+/** Mystery box: usually one power-up, sometimes two, sometimes it explodes. */
+function pickupBox(g, role, turn) {
+  const s = g[role], i = g.boxes.findIndex(b => eq(b, s.pos));
+  if (i < 0) return null;
+  g.boxes.splice(i, 1);
+  const o = g[ROLES[role].other], who = ROLES[role].name.toLowerCase(), where = nm(g, s.pos);
+  o.lastSeenOpp = { pos: pt(s.pos), turn, via: 'box' };
+  const roll = g.cfg.boxSurprises ? Math.random() : 1;
+  if (roll < .12) {
+    s.stuck = true;
+    log(s, turn, "💥 Booby-trapped! The box blew up in your face — you can't move next turn.", 'alert');
+    log(o, turn, `💥 BANG! The ${who} set off a booby-trapped box on ${where} — they can't move next turn.`, 'alert');
+    return 'boom';
+  }
+  const got = [];
+  for (let k = 0; k < (roll < .27 ? 2 : 1); k++) { const t = rand(POOL[role]); s.items[t]++; got.push(`${POWERS[t].icon} ${POWERS[t].name}`); }
+  log(s, turn, got.length === 2 ? `🎉 Jackpot! The box had two power-ups: ${got.join(' + ')}!` : `🎁 You grabbed a power-up: ${got[0]}!`, 'power');
+  log(o, turn, `🎁 The box on ${where} is gone — the ${who} grabbed it.`);
+  return 'ok';
+}
+
+function spawnBox(g, turn, force = false) {
+  const cfg = g.cfg;
+  if (!force && (g.boxes.length >= cfg.maxBoxes || Math.random() * 100 >= cfg.spawnChance)) return null;
+  const taken = c => !passable(g, c) || g.tunnels.has(key(c)) || [g.chests, g.exits, g.traps, g.boxes, g.decoys].some(l => l.some(x => eq(x, c)));
+  const spots = g.cells.filter(c => !taken(c) && hexDist(c, g.thief.pos) >= 2 && hexDist(c, g.police.pos) >= 2);
+  if (!spots.length) return null;
+  const c = rand(spots);
+  g.boxes.push({ ...c, turn });
+  g.stats.spawned++;
+  if (!force) for (const s of [g.thief, g.police]) log(s, turn, `🎁 A power-up box appeared on ${nm(g, c)}.`);
+  return c;
+}
+
+function maybeEvent(g, turn) {
+  if (Math.random() * 100 >= g.cfg.eventChance) return;
+  const T = g.thief, P = g.police;
+  const options = ['witness', 'scanner', 'drop'];
+  if (g.fx.fog < turn && g.fx.moon < turn) options.push('fog', 'moon');
+  if (g.rocks.size || g.walls.size) options.push('collapse');
+  const type = rand(options), E = EVENTS[type];
+  g.stats.events++;
+  const both = text => { log(T, turn, `${E.icon} ${text}`, 'event'); log(P, turn, `${E.icon} ${text}`, 'event'); };
+  switch (type) {
+    case 'fog': g.fx.fog = turn + 1; both('Thick fog rolls in — everyone sees 1 tile less for 2 turns.'); break;
+    case 'moon': g.fx.moon = turn + 1; both('The full moon comes out — everyone sees 1 tile further for 2 turns.'); break;
+    case 'witness': {
+      const near = rand(g.cells.filter(c => passable(g, c) && hexDist(c, T.pos) <= 1));
+      P.lastSeenOpp = { pos: pt(near), turn, via: 'witness' };
+      log(P, turn, `👀 Tip-off! A witness saw the thief within 1 tile of ${nm(g, near)}.`, 'event');
+      log(T, turn, '👀 You feel watched… someone may have tipped off the police.', 'event');
+      break;
+    }
+    case 'scanner': {
+      const near = rand(g.cells.filter(c => passable(g, c) && hexDist(c, P.pos) <= 1));
+      T.lastSeenOpp = { pos: pt(near), turn, via: 'scanner' };
+      log(T, turn, `📻 You caught some police radio chatter: the officer is within 1 tile of ${nm(g, near)}.`, 'event');
+      log(P, turn, '📻 Your radio crackles… the thief may be listening in.', 'event');
+      break;
+    }
+    case 'drop': {
+      const where = [spawnBox(g, turn, true), spawnBox(g, turn, true)].filter(Boolean).map(c => nm(g, c));
+      both(where.length ? `Supply drop! Power-up boxes landed on ${where.join(' and ')}.` : 'A supply drop missed the map entirely.');
+      break;
+    }
+    case 'collapse': {
+      const bits = [];
+      const ws = [...g.walls.entries()];
+      if (ws.length) { const [k, w] = rand(ws); g.walls.delete(k); P.knownWalls.delete(k); bits.push(`the wall between ${nm(g, w.a)} and ${nm(g, w.b)}`); }
+      if (g.rocks.size) { const rk = rand([...g.rocks]); g.rocks.delete(rk); bits.push(`the rock on ${nm(g, unkey(rk))}`); }
+      both(`Collapse! ${cap(bits.join(' and '))} crumbled.`);
+      break;
+    }
+  }
+}
+
+function finish(g, winner, reason, detail) {
+  g.over = { winner, reason, detail, turn: g.turn };
+  snapshot(g);
+}
+
+const moveLine = (m, p) => `You moved ${m.name} to ${p}.`;
+
+/**
+ * Resolve one turn. act = { thief: { steps, power }, police: { steps, power } }
+ *   steps: 1 move (2 with Run) · power: null | { type, cell? , a?, b? }
+ * Order: power-ups first, then movement in ticks (a runner takes one step per tick), then the net lands.
+ */
+function resolve(g, act) {
+  if (g.over) return;
+  const T = g.thief, P = g.police, cfg = g.cfg, turn = g.turn, need = cfg.lootToWin;
+  const stuckNow = { thief: T.stuck, police: P.stuck };
+  T.stuck = P.stuck = false;
+  const policeSawThief = seesOpp(g, 'police', turn - 1);
+
+  // 1. Power-ups take effect before anyone moves (building first, smashing last).
+  const ORDER = ['wall', 'trap', 'decoy', 'smoke', 'lockdown', 'run', 'net', 'hammer'];
+  const used = ['thief', 'police']
+    .map(role => ({ role, pw: act[role] && act[role].power }))
+    .filter(x => x.pw && POWERS[x.pw.type] && POWERS[x.pw.type].kind !== 'instant' && g[x.role].items[x.pw.type] > 0)
+    .sort((a, b) => ORDER.indexOf(a.pw.type) - ORDER.indexOf(b.pw.type));
+  const ran = {};
+  let net = null;
+  for (const { role, pw } of used) {
+    const s = g[role], o = g[ROLES[role].other];
+    s.items[pw.type]--;
+    g.stats.used++;
+    switch (pw.type) {
+      case 'wall':
+        g.walls.set(edgeKey(pw.a, pw.b), { a: pt(pw.a), b: pt(pw.b), turn });
+        log(s, turn, `🧱 You built a wall between ${nm(g, pw.a)} and ${nm(g, pw.b)}.`, 'power');
+        break;
+      case 'trap':
+        g.traps.push({ ...pt(pw.cell), turn });
+        log(s, turn, `🪤 You hid a trap on ${nm(g, pw.cell)}.`, 'power');
+        break;
+      case 'decoy':
+        g.decoys.push({ ...pt(pw.cell), turn });
+        log(s, turn, `🎭 You set up a decoy on ${nm(g, pw.cell)}.`, 'power');
+        break;
+      case 'smoke':
+        T.smokeUntil = turn + 1;
+        log(T, turn, `💨 You vanish in a cloud of smoke — the police can't see you until the end of turn ${turn + 1}.`, 'power');
+        if (policeSawThief) log(P, turn, '💨 The thief vanished in a puff of smoke!', 'alert');
+        break;
+      case 'lockdown':
+        g.lockUntil = Math.max(g.lockUntil, turn + 2);
+        log(P, turn, `🚨 Lockdown! Every exit is sealed until the end of turn ${g.lockUntil}.`, 'power');
+        log(T, turn, `🚨 LOCKDOWN! Sirens everywhere — every exit is sealed until the end of turn ${g.lockUntil}.`, 'alert');
+        break;
+      case 'run':
+        ran[role] = true;
+        log(s, turn, '👟 You broke into a run!', 'power');
+        break;
+      case 'net':
+        net = pt(pw.cell);
+        log(s, turn, `🕸️ You threw a net at ${nm(g, pw.cell)}.`, 'power');
+        break;
+      case 'hammer':
+        if (pw.cell) {
+          g.rocks.delete(key(pw.cell));
+          log(s, turn, `🔨 You smashed the rock on ${nm(g, pw.cell)}.`, 'power');
+          log(o, turn, `💥 A loud crash — the rock on ${nm(g, pw.cell)} has been smashed.`);
+        } else {
+          const k = edgeKey(pw.a, pw.b);
+          g.walls.delete(k); P.knownWalls.delete(k);
+          log(s, turn, `🔨 You smashed the wall between ${nm(g, pw.a)} and ${nm(g, pw.b)}.`, 'power');
+          log(o, turn, `💥 A loud crash — the wall between ${nm(g, pw.a)} and ${nm(g, pw.b)} is gone.`);
+        }
+        break;
+    }
+  }
+
+  // 2. Movement, one tick at a time.
+  const steps = {};
+  for (const role of ['thief', 'police']) {
+    const list = ((act[role] && act[role].steps) || []).slice(0, ran[role] ? 2 : 1);
+    steps[role] = stuckNow[role] ? [WAIT] : list.length ? list : [WAIT];
+    if (stuckNow[role]) log(g[role], turn, "😵 You couldn't move this turn — but you're free again now.");
+  }
+  const ticks = Math.max(steps.thief.length, steps.police.length);
+  const halted = {};
+  for (let i = 0; i < ticks; i++) {
+    const prev = { thief: T.pos, police: P.pos }, moved = {};
+    for (const role of ['thief', 'police']) {
+      const s = g[role], m = steps[role][i], oRole = ROLES[role].other;
+      if (!m || isWait(m) || halted[role]) continue;
+      const np = add(s.pos, m);
+      if (!passable(g, np)) { halted[role] = true; log(s, turn, `🪨 You can't move onto ${onBoard(g, np) ? nm(g, np) : 'that tile'}.`); continue; }
+      const k = edgeKey(s.pos, np);
+      if (g.walls.has(k)) {
+        halted[role] = true;
+        if (role === 'police') P.knownWalls.add(k);
+        log(s, turn, `🧱 Bonk! A wall blocks the way from ${nm(g, s.pos)} to ${nm(g, np)}.`);
+        continue;
+      }
+      const out = g.tunnels.get(key(np));
+      if (out) {
+        s.path.push({ ...np, turn });
+        s.pos = pt(out);
+        s.path.push({ ...out, turn, jump: true });
+        log(s, turn, `🕳️ You dropped into the tunnel on ${nm(g, np)} and came out on ${nm(g, out)}.`, 'move');
+        if (sees(g, oRole, np, turn - 1) && !hiddenNow(g, role, turn - 1))
+          log(g[oRole], turn, `🕳️ You saw the ${ROLES[role].name.toLowerCase()} drop into the tunnel on ${nm(g, np)}!`, 'alert');
+      } else {
+        s.pos = np;
+        s.path.push({ ...np, turn });
+        log(s, turn, moveLine(m, nm(g, np)), 'move');
+      }
+      moved[role] = true;
+    }
+
+    // Catch: same tile, or swapping tiles.
+    const same = eq(T.pos, P.pos);
+    const swapped = !same && moved.thief && moved.police && eq(T.pos, prev.police) && eq(P.pos, prev.thief);
+    if (same || (swapped && cfg.swapCatch)) {
+      const where = same ? `on ${nm(g, T.pos)}` : `while swapping ${nm(g, prev.thief)} ↔ ${nm(g, prev.police)}`;
+      log(T, turn, `🚨 Busted! The police caught you ${where}.`, 'alert');
+      log(P, turn, `🚔 Got them! You caught the thief ${where}.`, 'alert');
+      return finish(g, 'police', 'caught', `Caught ${where} on turn ${turn}.`);
+    }
+    if (swapped) {
+      log(T, turn, '😮 You slipped right past the police!', 'alert');
+      log(P, turn, '😮 The thief slipped right past you!', 'alert');
+    }
+
+    if (moved.thief) {
+      const ti = g.traps.findIndex(t => eq(t, T.pos));
+      if (ti >= 0) {
+        g.traps.splice(ti, 1);
+        T.stuck = true; halted.thief = true;
+        P.lastSeenOpp = { pos: pt(T.pos), turn, via: 'trap' };
+        log(T, turn, `🪤 You stepped into a hidden trap on ${nm(g, T.pos)}! You can't move next turn.`, 'alert');
+        log(P, turn, `🪤 Snap! Your trap on ${nm(g, T.pos)} caught the thief — they can't move next turn.`, 'alert');
+      }
+      const ci = g.chests.findIndex(c => !c.looted && eq(c, T.pos));
+      if (ci >= 0) {
+        g.chests[ci].looted = true;
+        T.loot++;
+        T.knownChests.set(ci, true);
+        log(T, turn, `💰 You cracked the chest on ${nm(g, T.pos)}! Loot ${T.loot}/${need}.` + (T.loot >= need ? ' Now get to an exit!' : ''), 'power');
+        if (cfg.alarm) {
+          P.chestState[ci] = true;
+          P.lastSeenOpp = { pos: pt(T.pos), turn, via: 'alarm' };
+          log(P, turn, `🚨 ALARM! The chest on ${nm(g, T.pos)} was just robbed.`, 'alert');
+        }
+      }
+      if (pickupBox(g, 'thief', turn) === 'boom') halted.thief = true;
+      if (g.exits.some(e => eq(e, T.pos))) {
+        if (T.loot < need) log(T, turn, `🚪 This exit is no use until you have the loot (${T.loot}/${need}).`);
+        else if (turn <= g.lockUntil) log(T, turn, `🔒 The exit on ${nm(g, T.pos)} is sealed — lockdown until the end of turn ${g.lockUntil}!`, 'alert');
+      }
+    }
+    if (moved.police) {
+      const di = g.decoys.findIndex(d => eq(d, P.pos));
+      if (di >= 0) {
+        g.decoys.splice(di, 1);
+        log(P, turn, `🎭 It was just a decoy! A dummy thief on ${nm(g, P.pos)}.`, 'alert');
+        log(T, turn, `🎭 The police found your decoy on ${nm(g, P.pos)}.`);
+      }
+      if (pickupBox(g, 'police', turn) === 'boom') halted.police = true;
+    }
+
+    // Escape: on an exit, with the loot, not stuck, not in lockdown.
+    if (!T.stuck && T.loot >= need && turn > g.lockUntil && g.exits.some(e => eq(e, T.pos))) {
+      log(T, turn, `🏃 You slipped out through the exit on ${nm(g, T.pos)}. Clean getaway!`, 'alert');
+      log(P, turn, `💨 The thief escaped through an exit on ${nm(g, T.pos)}.`, 'alert');
+      return finish(g, 'thief', 'escaped', `Escaped through ${nm(g, T.pos)} on turn ${turn} with ${plural(T.loot, 'chest')} of loot.`);
+    }
+  }
+
+  // 3. The net lands where it was thrown.
+  if (net) {
+    if (eq(T.pos, net)) {
+      T.stuck = true;
+      P.lastSeenOpp = { pos: pt(T.pos), turn, via: 'net' };
+      log(T, turn, `🕸️ A net came flying out of nowhere and landed on you! You can't move next turn.`, 'alert');
+      log(P, turn, `🕸️ Bullseye! Your net caught the thief on ${nm(g, net)} — they can't move next turn.`, 'alert');
+    } else {
+      log(P, turn, `🕸️ Your net landed on ${nm(g, net)} — nothing there.`);
+      if (sees(g, 'thief', net, turn)) log(T, turn, `🕸️ A net landed on ${nm(g, net)} — close call!`, 'alert');
+    }
+  }
+  for (const role of ['thief', 'police'])
+    if (steps[role].every(isWait) && !stuckNow[role]) log(g[role], turn, `You waited on ${nm(g, g[role].pos)}.`, 'move');
+
+  // 4. Random event, look around, maybe a new box, check the clock.
+  maybeEvent(g, turn);
+  updateVision(g, turn);
+  spawnBox(g, turn);
+  if (turn >= cfg.maxTurns) {
+    log(T, turn, '⏰ Dawn breaks — you ran out of time.', 'alert');
+    log(P, turn, "⏰ Time's up — the thief never got away.", 'alert');
+    return finish(g, 'police', 'time', `The thief ran out of time after ${cfg.maxTurns} turns (loot ${T.loot}/${need}).`);
+  }
+  g.turn++;
+  snapshot(g);
+}
+
+/* ---------- targets for power-ups you aim ---------- */
+function targetsFor(g, role, type) {
+  const s = g[role], free = c => passable(g, c) && !g.tunnels.has(key(c));
+  switch (type) {
+    case 'trap':  return neighbors(g, s.pos).filter(c => free(c) && !g.traps.some(t => eq(t, c))).map(cell => ({ cell }));
+    case 'decoy': return neighbors(g, s.pos).filter(c => free(c) && !g.decoys.some(d => eq(d, c))).map(cell => ({ cell }));
+    case 'net':   return g.cells.filter(c => passable(g, c) && !eq(c, s.pos) && hexDist(c, s.pos) <= 2).map(cell => ({ cell }));
+    case 'wall': {
+      const out = new Map();
+      for (const c of g.cells) {
+        if (!passable(g, c) || !sees(g, 'thief', c)) continue;
+        for (const n of neighbors(g, c)) {
+          const k = edgeKey(c, n);
+          if (passable(g, n) && !g.walls.has(k) && !out.has(k)) out.set(k, { k, a: pt(c), b: pt(n) });
+        }
+      }
+      return [...out.values()];
+    }
+    case 'hammer': {
+      const rocks = neighbors(g, s.pos).filter(c => isRock(g, c)).map(cell => ({ cell }));
+      const walls = neighbors(g, s.pos).map(n => ({ k: edgeKey(s.pos, n), a: pt(s.pos), b: pt(n) })).filter(e => wallKnown(g, role, e.k));
+      return [...rocks, ...walls];
+    }
+  }
+  return [];
+}
+
+/* =====================================================================
+   BASIC AI — only uses what that side is allowed to know
+   ===================================================================== */
+// Steps-to-target for every tile, following walls/rocks/tunnels as this side knows them.
+function distField(g, role, target) {
+  const dist = new Map();
+  if (!target) return dist;
+  dist.set(key(target), 0);
+  const queue = [pt(target)];
+  for (let i = 0; i < queue.length; i++) {
+    const q = queue[i], d = dist.get(key(q));
+    const via = g.tunnels.get(key(q)) || q;   // to end up on q you step onto q (or onto its tunnel twin)
+    for (const x of neighbors(g, via)) {
+      const kx = key(x);
+      if (dist.has(kx) || !passable(g, x) || wallKnown(g, role, edgeKey(x, via))) continue;
+      dist.set(kx, d + 1);
+      queue.push(x);
+    }
+  }
+  return dist;
+}
+const fd = (field, p) => field.has(key(p)) ? field.get(key(p)) : 99;
+
+function exploreTarget(g, side, mem, pool = g.cells) {
+  if (mem.explore && !side.seen.has(key(mem.explore))) return mem.explore;
+  let best = null, bd = Infinity;
+  for (const c of pool) {
+    if (side.seen.has(key(c)) || !passable(g, c)) continue;
+    const d = hexDist(side.pos, c) + Math.random() * 2;
+    if (d < bd) { bd = d; best = c; }
+  }
+  return (mem.explore = best);
+}
+
+function stepsToward(g, role, pos, target, n, mods = null) {
+  const field = distField(g, role, target), out = [];
+  let p = pos;
+  for (let i = 0; i < n; i++) {
+    const moves = legalMoves(g, role, p, mods);
+    let best = WAIT, bs = -Infinity;
+    for (const m of moves) {
+      const s = (target ? -fd(field, stepLand(g, p, m)) : 0) + Math.random() * .5 - (isWait(m) ? .3 : 0);
+      if (s > bs) { bs = s; best = m; }
+    }
+    out.push(best);
+    p = stepLand(g, p, best);
+  }
+  return out;
+}
+function sequences(g, role, pos, n, mods) {
+  let out = [{ seq: [], end: pos }];
+  for (let i = 0; i < n; i++) {
+    const next = [];
+    for (const { seq, end } of out) for (const m of legalMoves(g, role, end, mods)) next.push({ seq: [...seq, m], end: stepLand(g, end, m) });
+    out = next;
+  }
+  return out.map(x => x.seq);
+}
+function weightedPick(items, weight) {
+  const ws = items.map(weight);
+  let r = Math.random() * ws.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < items.length; i++) { r -= ws[i]; if (r <= 0) return items[i]; }
+  return items[items.length - 1];
+}
+// The AI turns the compass's direction + distance into a best-guess tile (same info a human gets).
+function compassGuess(g, pos, cp) {
+  const A = unitXY(pos);
+  let best = null, bd = -Infinity;
+  for (const c of g.cells) {
+    if (hexDist(pos, c) !== cp.dist) continue;
+    const B = unitXY(c), l = Math.hypot(B.x - A.x, B.y - A.y);
+    const dot = ((B.x - A.x) * cp.dx + (B.y - A.y) * cp.dy) / l;
+    if (dot > bd) { bd = dot; best = c; }
+  }
+  return best;
+}
+// Would smashing something next to us make the trip a lot shorter?
+function hammerGain(g, role, target) {
+  const s = g[role], base = fd(distField(g, role, target), s.pos);
+  let best = null, gain = 2;
+  for (const t of targetsFor(g, role, 'hammer')) {
+    let undo;
+    if (t.cell) { g.rocks.delete(key(t.cell)); undo = () => g.rocks.add(key(t.cell)); }
+    else {
+      const w = g.walls.get(t.k), known = g.police.knownWalls.has(t.k);
+      g.walls.delete(t.k); g.police.knownWalls.delete(t.k);
+      undo = () => { g.walls.set(t.k, w); if (known) g.police.knownWalls.add(t.k); };
+    }
+    const d = fd(distField(g, role, target), s.pos);
+    undo();
+    if (base - d > gain) { gain = base - d; best = t.cell ? { type: 'hammer', cell: pt(t.cell) } : { type: 'hammer', a: t.a, b: t.b }; }
+  }
+  return best;
+}
+
+function aiThief(g) {
+  const T = g.thief, P = g.police, cfg = g.cfg, need = cfg.lootToWin, mem = g.ai.thief;
+  const has = t => T.items[t] > 0;
+  const pv = seesOpp(g, 'thief') ? P.pos : null;
+  const ls = T.lastSeenOpp;
+  const recent = !pv && ls && g.turn - 1 - ls.turn <= 2 ? ls.pos : null;
+  const dPol = pv ? hexDist(T.pos, pv) : 99;
+  const locked = g.lockUntil >= g.turn;
+  let power = null, instant = false;
+
+  // Police right on top of us: wall them off or vanish.
+  if (pv && dPol <= 2) {
+    if (dPol === 1 && has('wall') && !g.walls.has(edgeKey(T.pos, pv))) power = { type: 'wall', a: pt(T.pos), b: pt(pv) };
+    else if (has('smoke') && T.smokeUntil < g.turn) power = { type: 'smoke' };
+    else if (dPol === 2 && has('wall')) {
+      const mids = neighbors(g, pv).filter(n => hexDist(n, T.pos) === 1 && passable(g, n) && !g.walls.has(edgeKey(pv, n)));
+      if (mids.length) power = { type: 'wall', a: pt(pv), b: pt(rand(mids)) };
+    }
+  }
+  if (T.stuck) return { steps: [WAIT], power };
+  if (!power && pv && dPol <= 2 && has('run')) power = { type: 'run' };
+  if (!power && pv && dPol >= 2 && has('decoy')) {
+    const spots = targetsFor(g, 'thief', 'decoy').map(t => t.cell);
+    if (spots.length) power = { type: 'decoy', cell: pt(nearest(spots, pv)) };
+  }
+
+  const known = [...T.knownChests].filter(([, looted]) => !looted).map(([i]) => g.chests[i]);
+  if (mem.compassGoal && T.seen.has(key(mem.compassGoal))) mem.compassGoal = null;
+  if (!power && T.loot < need && !known.length && !mem.compassGoal && has('compass') && useInstant(g, 'thief', 'compass')) {
+    instant = true;
+    if (T.compass) mem.compassGoal = compassGuess(g, T.pos, T.compass);
+  }
+
+  let target;
+  if (T.loot >= need) target = nearest(g.exits, T.pos);
+  else if (known.length) target = nearest(known, T.pos);
+  else target = mem.compassGoal || exploreTarget(g, T, mem);
+  const box = g.boxes.find(b => hexDist(b, T.pos) <= 2);
+  if (box && !pv && T.loot < need) target = box;
+
+  if (!power && !instant && has('hammer') && target) power = hammerGain(g, 'thief', target);
+  if (!power && !instant && has('run') && target) {
+    const d = fd(distField(g, 'thief', target), T.pos);
+    if (d === 2 && (T.loot >= need ? !locked : known.length)) power = { type: 'run' };
+  }
+
+  const n = power && power.type === 'run' ? 2 : 1;
+  const mods = powerMods(power);
+  const field = distField(g, 'thief', target);
+  const policeNext = pv ? legalMoves(g, 'thief', pv, mods).map(m => stepLand(g, pv, m)) : [];
+  let best = [WAIT], bs = -Infinity;
+  for (const seq of sequences(g, 'thief', T.pos, n, mods)) {
+    const pts = walk(g, T.pos, seq), end = pts[pts.length - 1];
+    let s = target ? -fd(field, end) : 0;
+    if (T.loot >= need && !locked && pts.some(p => g.exits.some(e => eq(e, p)))) s += 10;
+    if (pv) {
+      pts.forEach((p, i) => { if (policeNext.some(r => eq(r, p))) s -= i === pts.length - 1 ? 6 : 3; });
+      if (cfg.swapCatch && eq(pts[0], pv)) s -= 4;
+      s += Math.min(hexDist(end, pv), 3);
+      if (isBush(g, end)) s += 1.5;
+    } else if (recent) {
+      s += Math.min(hexDist(end, recent), 4) * .4;
+    }
+    if (seq.every(isWait)) s -= .4;
+    s += Math.random() * 1.2;
+    if (s > bs) { bs = s; best = seq; }
+  }
+  return { steps: best, power };
+}
+
+function aiPolice(g) {
+  const P = g.police, cfg = g.cfg, mem = g.ai.police, need = cfg.lootToWin;
+  const has = t => P.items[t] > 0;
+  const ageOf = l => l ? g.turn - 1 - l.turn : Infinity;
+  let ls = P.lastSeenOpp, power = null, instant = false;
+
+  // Lost the trail? Radar first, then the dog.
+  if (has('radar') && ageOf(ls) >= 4 && useInstant(g, 'police', 'radar')) instant = true;
+  else if (has('dog') && ageOf(ls) >= 3 && useInstant(g, 'police', 'dog')) instant = true;
+  ls = P.lastSeenOpp;
+  const age = ageOf(ls);
+  const tp = age === 0 ? ls.pos : null;   // we know (or think we know) where the thief is right now
+  const unlooted = g.chests.filter((c, i) => !P.chestState[i]);
+  const lootLikely = g.chests.length - unlooted.length >= need;
+
+  if (!instant) {
+    if (has('lockdown') && lootLikely && g.lockUntil < g.turn) power = { type: 'lockdown' };
+    else if (has('net') && tp && hexDist(P.pos, tp) >= 2 && hexDist(P.pos, tp) <= 3) {
+      const opts = legalMoves(g, 'police', tp).map(m => stepLand(g, tp, m)).filter(c => hexDist(c, P.pos) <= 2 && passable(g, c) && !eq(c, P.pos));
+      if (opts.length) power = { type: 'net', cell: pt(weightedPick(opts, c => 1 + hexDist(c, P.pos))) };
+    }
+    if (!power && has('trap')) {
+      const spots = targetsFor(g, 'police', 'trap').map(t => t.cell);
+      const guard = g.chests.find((c, i) => !P.chestState[i] && spots.some(s => eq(s, c)));
+      if (guard) power = { type: 'trap', cell: pt(guard) };
+      else if (tp && hexDist(P.pos, tp) <= 2) {
+        const thiefNext = legalMoves(g, 'police', tp).map(m => stepLand(g, tp, m));
+        const cut = spots.filter(c => !eq(c, tp) && thiefNext.some(t => eq(t, c)));
+        if (cut.length) power = { type: 'trap', cell: pt(rand(cut)) };
+      }
+    }
+    if (!power && has('run')) {
+      if (tp && hexDist(P.pos, tp) >= 2 && hexDist(P.pos, tp) <= 4) power = { type: 'run' };
+      else if (!tp && ls && age <= 2 && hexDist(P.pos, ls.pos) >= 3) power = { type: 'run' };
+    }
+  }
+  if (P.stuck) return { steps: [WAIT], power };
+  const n = power && power.type === 'run' ? 2 : 1;
+
+  // We know where the thief is: pick the moves that cover the most of its possible next tiles.
+  if (tp) {
+    const thiefNext = legalMoves(g, 'police', tp).map(m => stepLand(g, tp, m));
+    let best = [WAIT], bs = -Infinity;
+    for (const seq of sequences(g, 'police', P.pos, n)) {
+      const pts = walk(g, P.pos, seq);
+      let cover = 0;
+      for (const c of thiefNext) {
+        const hit = pts.some(p => eq(p, c)) || (cfg.swapCatch && eq(pts[0], tp) && eq(c, P.pos));
+        if (hit) cover += eq(c, tp) ? 1.5 : 1;
+      }
+      const s = cover * 2 - hexDist(pts[pts.length - 1], tp) * .5 + Math.random();
+      if (s > bs) { bs = s; best = seq; }
+    }
+    return { steps: best, power };
+  }
+
+  let target = null, linger = false;
+  if (ls && mem.cleared !== ls && age <= 5) {
+    if (hexDist(P.pos, ls.pos) <= visionOf(g, g.turn - 1)) {
+      mem.cleared = ls;
+      // Nobody there… they might be hiding in a bush nearby.
+      mem.bushes = g.cells.filter(c => isBush(g, c) && hexDist(c, ls.pos) <= 1);
+    } else target = ls.pos;
+  }
+  if (!target && mem.bushes && mem.bushes.length) {
+    if (eq(P.pos, mem.bushes[0])) mem.bushes.shift();
+    if (mem.bushes.length) target = mem.bushes[0];
+  }
+  if (!target) { const box = g.boxes.find(b => hexDist(b, P.pos) <= 2); if (box) target = box; }
+  if (!target) {
+    if (lootLikely || !unlooted.length) {
+      const exits = [...P.knownExits].map(i => g.exits[i]);
+      target = exits.length ? nearest(exits, ls ? ls.pos : P.pos) : exploreTarget(g, P, mem, g.cells.filter(c => isBorder(g, c)));
+    } else {
+      mem.patrol = (mem.patrol || 0) % unlooted.length;
+      target = unlooted[mem.patrol];
+      if (hexDist(P.pos, target) <= 1) {
+        linger = n === 1 && Math.random() < .35;
+        mem.patrol = (mem.patrol + 1) % unlooted.length;
+        if (!linger) target = unlooted[mem.patrol];
+      }
+    }
+  }
+  if (!power && !instant && has('hammer') && target) power = hammerGain(g, 'police', target);
+  if (linger) return { steps: [WAIT], power };
+  return { steps: stepsToward(g, 'police', P.pos, target, n, powerMods(power)), power };
+}
+
+function simulate(cfg, games) {
+  const r = { games, thief: 0, caught: 0, time: 0, turns: 0, spawned: 0, used: 0, events: 0 };
+  for (let i = 0; i < games; i++) {
+    const g = newGame(cfg, genMap(cfg));
+    while (!g.over) { const t = aiThief(g), p = aiPolice(g); resolve(g, { thief: t, police: p }); }
+    if (g.over.winner === 'thief') r.thief++; else r[g.over.reason]++;
+    r.turns += g.over.turn; r.spawned += g.stats.spawned; r.used += g.stats.used; r.events += g.stats.events;
+  }
+  return r;
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const store = {
+  get(k, fallback) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const emptyPlans = () => ({ thief: { steps: [], power: null }, police: { steps: [], power: null } });
+
+const ui = {
+  cfg: { ...DEFAULT_CFG, ...store.get('chase.cfg.v3', {}) },
+  mode: store.get('chase.mode', 'hotseat'),  // menu selection: 'hotseat' | 'thief' | 'police'
+  playMode: 'hotseat',                        // mode of the game in progress
+  screen: 'menu',                             // 'menu' | 'cover' | 'plan' | 'over'
+  active: 'thief',
+  plan: emptyPlans(),
+  targeting: null,                            // power-up type while picking a spot for it
+  map: null, game: null,
+  debugReveal: false,
+  replayK: 0, replayTimer: null,
+  simResult: '',
+};
+
+const boardEl = $('#board'), panelEl = $('#panel'), overlayEl = $('#overlay');
+
+/* ---------- planning helpers ---------- */
+const stepsNeeded = role => ui.game[role].stuck ? 1 : (ui.plan[role].power?.type === 'run' ? 2 : 1);
+const planMods = role => powerMods(ui.plan[role].power);
+const planSteps = role => ui.game[role].stuck ? [WAIT] : ui.plan[role].steps;
+// Where the next chosen step starts from (a full plan restarts from your own tile).
+function stepOrigin(role) {
+  const s = ui.game[role], p = ui.plan[role];
+  return p.steps.length >= stepsNeeded(role) ? s.pos : pathEnd(ui.game, s.pos, p.steps);
+}
+// Drop any steps that no longer fit (e.g. after cancelling Run or arming a Wall).
+function validatePlan(role) {
+  const g = ui.game, p = ui.plan[role];
+  p.steps = p.steps.slice(0, stepsNeeded(role));
+  let pos = g[role].pos;
+  for (let i = 0; i < p.steps.length; i++) {
+    if (!legalMoves(g, role, pos, planMods(role)).includes(p.steps[i])) { p.steps = p.steps.slice(0, i); break; }
+    pos = stepLand(g, pos, p.steps[i]);
+  }
+}
+function canUsePower(role, type) {
+  const g = ui.game, s = g[role], p = ui.plan[role];
+  if (!s.items[type] || s.instantTurn === g.turn) return false;
+  if (p.power && p.power.type !== type) return false;
+  if (type === 'run' && s.stuck) return false;
+  if (POWERS[type].kind === 'target' && !targetsFor(g, role, type).length) return false;
+  return true;
+}
+
+/* ---------- flow ---------- */
+function startGame(cfg, map, mode) {
+  stopReplay();
+  ui.playMode = mode;
+  ui.map = map || genMap(cfg);
+  ui.game = newGame(cfg, ui.map);
+  ui.debugReveal = false;
+  beginTurn();
+}
+
+function beginTurn() {
+  ui.plan = emptyPlans();
+  ui.targeting = null;
+  if (ui.playMode === 'hotseat') { ui.active = 'thief'; ui.screen = 'cover'; }
+  else { ui.active = ui.playMode; ui.screen = 'plan'; }
+  render();
+}
+
+function chooseStep(m) {
+  if (ui.screen !== 'plan') return;
+  const g = ui.game, role = ui.active, s = g[role], p = ui.plan[role];
+  if (s.stuck || ui.targeting) return;
+  if (p.steps.length >= stepsNeeded(role)) p.steps = [];
+  if (!legalMoves(g, role, pathEnd(g, s.pos, p.steps), planMods(role)).includes(m)) return;
+  p.steps.push(m);
+  render();
+}
+
+function aimAt(match) {
+  const role = ui.active, t = targetsFor(ui.game, role, ui.targeting).find(match);
+  if (!t) return;
+  ui.plan[role].power = { type: ui.targeting, ...(t.cell ? { cell: pt(t.cell) } : { a: pt(t.a), b: pt(t.b) }) };
+  ui.targeting = null;
+  validatePlan(role);
+  render();
+}
+
+function clickCell(c) {
+  if (ui.screen !== 'plan') return;
+  const g = ui.game, role = ui.active, s = g[role], p = ui.plan[role];
+  if (ui.targeting) return aimAt(t => t.cell && eq(t.cell, c));
+  if (s.stuck) return;
+  let m = dirBetween(stepOrigin(role), c);
+  if (!m && p.steps.length) { m = dirBetween(s.pos, c); if (m) p.steps = []; }  // start over from your own tile
+  if (m) chooseStep(m);
+}
+
+function clickPower(type) {
+  if (ui.screen !== 'plan') return;
+  const g = ui.game, role = ui.active, p = ui.plan[role];
+  if (!POOL[role].includes(type)) return;
+  if (p.power && p.power.type === type) { p.power = null; ui.targeting = null; validatePlan(role); return render(); }  // cancel
+  if (ui.targeting === type) { ui.targeting = null; return render(); }
+  if (!canUsePower(role, type)) return;
+  const kind = POWERS[type].kind;
+  ui.targeting = null;
+  if (kind === 'instant') useInstant(g, role, type);
+  else if (kind === 'self') { p.power = { type }; validatePlan(role); }
+  else ui.targeting = type;
+  render();
+}
+
+function lockIn() {
+  if (ui.screen !== 'plan') return;
+  const g = ui.game, role = ui.active, p = ui.plan[role];
+  if (g[role].stuck) p.steps = [WAIT];
+  if (p.steps.length < stepsNeeded(role)) return;
+  ui.targeting = null;
+  if (ui.playMode === 'hotseat') {
+    if (role === 'thief') { ui.active = 'police'; ui.screen = 'cover'; render(); return; }
+    return resolveTurn({ thief: ui.plan.thief, police: ui.plan.police });
+  }
+  // vs AI: the AI decides from the same start-of-turn state.
+  if (role === 'thief') resolveTurn({ thief: p, police: aiPolice(g) });
+  else resolveTurn({ thief: aiThief(g), police: p });
+}
+
+function resolveTurn(act) {
+  resolve(ui.game, act);
+  if (ui.game.over) {
+    ui.screen = 'over';
+    ui.replayK = ui.game.history.length - 1;
+    render();
+    return;
+  }
+  beginTurn();
+}
+
+function openMenu() { stopReplay(); ui.targeting = null; ui.screen = 'menu'; render(); }
+
+/* ---------- render ---------- */
+function render() {
+  const s = ui.screen;
+  document.body.dataset.role = (s === 'plan' || s === 'cover') ? ui.active : s === 'over' ? ui.game.over.winner : '';
+  renderOverlay();
+  renderBoard();
+  renderPanel();
+}
+
+const S = 30;   // hex radius in SVG units
+const f1 = n => n.toFixed(1);
+const XY = p => { const u = unitXY(p); return { x: u.x * S, y: u.y * S }; };
+const HEX = Array.from({ length: 6 }, (_, i) => { const a = Math.PI / 180 * (60 * i - 30); return [Math.cos(a), Math.sin(a)]; });
+const hexPoints = (c, k = 1) => HEX.map(([x, y]) => `${f1(c.x + x * S * k)},${f1(c.y + y * S * k)}`).join(' ');
+function edgeSeg(a, b) {
+  const A = XY(a), B = XY(b), mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+  const len = Math.hypot(B.x - A.x, B.y - A.y), ux = -(B.y - A.y) / len, uy = (B.x - A.x) / len;
+  return `x1="${f1(mx + ux * S / 2)}" y1="${f1(my + uy * S / 2)}" x2="${f1(mx - ux * S / 2)}" y2="${f1(my - uy * S / 2)}"`;
+}
+const wallSVG = (w, cls = '') => `<line class="wall ${w.map ? 'map' : ''} ${cls}" ${edgeSeg(w.a, w.b)}/>`;
+function lineSVG(a, b, cls, trimA, trimB, marker) {
+  const A = XY(a), B = XY(b), l = Math.hypot(B.x - A.x, B.y - A.y), ux = (B.x - A.x) / l, uy = (B.y - A.y) / l;
+  return `<line class="${cls}" x1="${f1(A.x + ux * trimA)}" y1="${f1(A.y + uy * trimA)}" x2="${f1(B.x - ux * trimB)}" y2="${f1(B.y - uy * trimB)}"${marker ? ` marker-end="url(#${marker})"` : ''}/>`;
+}
+
+const SVG_DEFS = `<defs>
+  <pattern id="fog" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <rect width="7" height="7" fill="#080a10"/><rect width="3" height="7" fill="#0c0f17"/></pattern>
+  <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+    <path d="M0,0L10,5L0,10z" style="fill:var(--role)"/></marker>
+  <marker id="arrowGold" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+    <path d="M0,0L10,5L0,10z" style="fill:var(--gold)"/></marker>
+</defs>`;
+
+function paintBoard(R, cells, overlay = '') {
+  const w = S * SQ3 * (R + .5), h = S * (1.5 * R + 1), padL = S * 1.3;
+  boardEl.setAttribute('viewBox', `${f1(-w - padL)} ${f1(-h - 4)} ${f1(2 * w + padL + 4)} ${f1(2 * h + 8)}`);
+  let labels = '';
+  for (let r = -R; r <= R; r++) {
+    const c = XY({ q: Math.max(-R, -r - R), r });
+    labels += `<text class="row-label" x="${f1(c.x - S * 1.3)}" y="${f1(c.y)}">${String.fromCharCode(65 + r + R)}</text>`;
+  }
+  boardEl.innerHTML = SVG_DEFS + labels + cells + overlay;
+}
+
+// o = { cls, tint, bg, pieces: [{icon, cls, badge}], items: [{icon, cls}], start, badge, tnum, titles }
+function cellSVG(R, c, o) {
+  const p = XY(c), name = nameOf(R, c);
+  let s = `<g class="${o.cls.join(' ')}" data-q="${c.q}" data-r="${c.r}"><title>${[name, ...o.titles].join(' · ')}</title>`;
+  s += `<polygon class="base" points="${hexPoints(p)}"/>`;
+  if (o.tint) s += `<polygon class="tint ${o.tint}" points="${hexPoints(p)}"/>`;
+  s += `<polygon class="ring" points="${hexPoints(p, .86)}"/>`;
+  if (o.bg) s += `<text class="bg-emoji" x="${f1(p.x)}" y="${f1(p.y)}">${o.bg}</text>`;
+  s += `<text class="coord" x="${f1(p.x)}" y="${f1(p.y + 20)}">${name}</text>`;
+  if (o.start) s += `<text class="start ${o.start}" x="${f1(p.x - 13)}" y="${f1(p.y - 13)}">S</text>`;
+  const [main, ...rest] = o.pieces;
+  const big = main || o.items[0];
+  const minis = main ? [...rest, ...o.items] : o.items.slice(1);
+  if (big) s += `<text class="piece ${big.cls || ''}" x="${f1(p.x)}" y="${f1(p.y - 1)}">${big.icon}</text>`;
+  const badge = (main && main.badge) || o.badge;
+  if (badge) s += `<text class="badge" x="${f1(p.x - 14)}" y="${f1(p.y + 10)}">${badge}</text>`;
+  if (o.tnum) s += `<text class="tnum" x="${f1(p.x + 13)}" y="${f1(p.y - 14)}">${o.tnum}</text>`;
+  const spots = [[14, 9], [14, -12], [-14, 9]];
+  minis.slice(0, 3).forEach((m, i) => {
+    s += `<text class="mini ${m.cls || ''}" x="${f1(p.x + spots[i][0])}" y="${f1(p.y + spots[i][1])}">${m.icon}</text>`;
+  });
+  return s + '</g>';
+}
+
+const startOf = (g, c) => eq(c, g.starts.thief) ? 'thief' : eq(c, g.starts.police) ? 'police' : null;
+
+// The parts of a tile everyone knows: the map itself.
+function terrainBits(g, c, o, rocks = g.rocks) {
+  if (rocks.has(key(c))) { o.tint = 'rock'; o.items.push({ icon: ICON.rock }); o.titles.push('Rock — nobody can enter'); }
+  if (isBush(g, c)) { o.tint = 'bush'; o.bg = ICON.bush; o.titles.push("Bush — whoever is inside can't be seen"); }
+  const tn = tunnelNo(g, c);
+  if (tn) {
+    o.items.push({ icon: ICON.tunnel, cls: 'item' });
+    o.titles.push(`Tunnel — comes out on ${nm(g, g.tunnels.get(key(c)))}`);
+    if (g.tunnelList.length > 1) o.tnum = tn;
+  }
+  o.start = startOf(g, c);
+  if (o.start) o.titles.push(`${ROLES[o.start].name} start`);
+}
+
+function renderBoard() {
+  const g = ui.game, R = g ? g.cfg.radius : ui.cfg.radius;
+  if (!g || ui.screen === 'menu' || ui.screen === 'cover') {
+    paintBoard(R, boardCells(R).map(c => cellSVG(R, c, { cls: ['hex', 'dark'], pieces: [], items: [], titles: [] })).join(''));
+    return;
+  }
+  if (ui.screen === 'over') renderReplay(g);
+  else renderPlayerView(g, ui.active);
+}
+
+function renderPlayerView(g, role) {
+  const R = g.cfg.radius, s = g[role], other = ROLES[role].other, opp = g[other];
+  const reveal = ui.debugReveal, plan = ui.plan[role], pw = plan.power;
+  const stuck = !!s.stuck, steps = planSteps(role);
+  const det = walkDetail(g, s.pos, steps);
+  const end = det.length ? det[det.length - 1].land : null;
+  const mods = planMods(role);
+  const origin = stepOrigin(role);
+  const moveTargets = (stuck || ui.targeting) ? [] : legalMoves(g, role, origin, mods).map(m => add(origin, m));
+  const aims = ui.targeting ? targetsFor(g, role, ui.targeting) : [];
+  const oppSeen = reveal || seesOpp(g, role);
+  const fakeThieves = role === 'police' && !reveal ? visibleDecoys(g) : [];
+  const ls = s.lastSeenOpp;
+  const scent = role === 'police' && s.scent && s.scent.turn === g.turn ? s.scent.marks : [];
+  const locked = g.lockUntil >= g.turn;
+  const smoked = role === 'thief' && s.smokeUntil >= g.turn - 1;
+
+  let cells = '';
+  for (const c of g.cells) {
+    const vis = reveal || sees(g, role, c), seen = vis || s.seen.has(key(c));
+    const o = { cls: ['hex', vis ? 'vis' : seen ? 'mem' : 'dark'], pieces: [], items: [], titles: [] };
+    terrainBits(g, c, o);
+
+    const ei = g.exits.findIndex(e => eq(e, c));
+    if (ei >= 0 && (reveal || role === 'thief' || g.police.knownExits.has(ei))) {
+      o.items.push({ icon: ICON.exit, cls: 'item' }); o.titles.push(locked ? 'Exit (sealed — lockdown)' : 'Exit');
+      if (locked) o.items.push({ icon: ICON.lock });
+    }
+    const ci = g.chests.findIndex(ch => eq(ch, c));
+    if (ci >= 0) {
+      let looted;
+      if (reveal) looted = g.chests[ci].looted;
+      else if (role === 'police') looted = g.police.chestState[ci];
+      else if (g.thief.knownChests.has(ci)) looted = g.thief.knownChests.get(ci);
+      if (looted !== undefined) { o.items.push({ icon: ICON.chest, cls: 'item' + (looted ? ' looted' : '') }); o.titles.push(looted ? 'Chest (robbed)' : 'Chest'); }
+    }
+    if (g.boxes.some(b => eq(b, c))) { o.items.push({ icon: ICON.box, cls: 'item' }); o.titles.push('Mystery power-up box'); }
+    if ((reveal || role === 'police') && g.traps.some(t => eq(t, c))) { o.items.push({ icon: ICON.trap, cls: 'item' }); o.titles.push('Hidden trap'); }
+    if ((reveal || role === 'thief') && g.decoys.some(d => eq(d, c))) { o.items.push({ icon: ICON.decoy, cls: 'item' }); o.titles.push('Your decoy'); }
+    const mark = scent.find(m => eq(m.pos, c));
+    if (mark) { o.items.push({ icon: ICON.scent }); o.badge = mark.turn ? 'T' + mark.turn : 'S'; o.titles.push(`The thief stood here ${mark.turn ? 'after turn ' + mark.turn : 'at the start'}`); }
+    if (pw && pw.cell && eq(pw.cell, c)) {
+      o.items.unshift({ icon: POWERS[pw.type].icon, cls: 'pending' });
+      o.titles.push(`${POWERS[pw.type].name} — this turn`);
+    }
+
+    if (eq(c, s.pos)) {
+      o.pieces.push({ icon: ROLES[role].icon, cls: 'me' + (smoked ? ' smoked' : '') });
+      if (smoked) o.items.unshift({ icon: ICON.smoke });
+      o.titles.push(stuck ? "You (can't move this turn)" : 'You');
+    }
+    if (oppSeen && eq(c, opp.pos)) { o.pieces.push({ icon: ROLES[other].icon }); o.titles.push(ROLES[other].name); }
+    if (fakeThieves.some(d => eq(d, c))) { o.pieces.push({ icon: ROLES.thief.icon }); o.titles.push('Thief?'); }
+    if (!oppSeen && ls && eq(c, ls.pos) && !o.pieces.some(x => x.icon === ROLES[other].icon)) {
+      const via = { radar: '📡', witness: '👀', scanner: '📻', dog: '🐾', net: '🕸️' }[ls.via];
+      o.pieces.push({ icon: ROLES[other].icon, cls: 'ghost', badge: via || (ls.turn === 0 ? 'S' : 'T' + ls.turn) });
+      o.titles.push(ls.via === 'witness' || ls.via === 'scanner'
+        ? `${ROLES[other].name} reported within 1 tile of here (turn ${ls.turn})`
+        : `${ROLES[other].name} last seen here ${ls.turn === 0 ? 'at the start' : 'on turn ' + ls.turn}`);
+    }
+
+    if (moveTargets.some(t => eq(t, c))) o.cls.push('can-move');
+    if (aims.some(t => t.cell && eq(t.cell, c))) o.cls.push('target');
+    if (end && eq(end, c)) o.cls.push('planned');
+    else if (det.some(d => eq(d.land, c) || eq(d.enter, c))) o.cls.push('mid');
+    if (stuck && eq(c, s.pos)) o.cls.push('stuck');
+    cells += cellSVG(R, c, o);
+  }
+
+  let over = '';
+  for (const [k, w] of g.walls) {
+    if (!(reveal || role === 'thief' || g.police.knownWalls.has(k))) continue;
+    const smashing = pw && pw.type === 'hammer' && pw.a && edgeKey(pw.a, pw.b) === k;
+    over += wallSVG(w, smashing ? 'smash' : '');
+  }
+  if (pw && pw.type === 'wall') over += wallSVG(pw, 'pending');
+  for (const t of aims.filter(t => t.k))
+    over += `<g class="edge-target" data-edge="${t.k}"><title>${nm(g, t.a)} | ${nm(g, t.b)}</title><line class="hit" ${edgeSeg(t.a, t.b)}/><line class="show" ${edgeSeg(t.a, t.b)}/></g>`;
+  // Planned path (a tunnel hop shows as a dotted line)
+  det.forEach((d, i) => {
+    if (d.wait) return;
+    over += lineSVG(d.from, d.enter, 'path', S * .5, S * .42, d.enter === d.land || eq(d.enter, d.land) ? 'arrow' : null);
+    if (!eq(d.enter, d.land)) over += lineSVG(d.enter, d.land, 'path jump', S * .4, S * .42, 'arrow');
+  });
+  // Tip-off ring
+  if (ls && (ls.via === 'witness' || ls.via === 'scanner') && ls.turn === g.turn - 1 && !oppSeen) {
+    const c = XY(ls.pos);
+    over += `<circle class="hint-ring" cx="${f1(c.x)}" cy="${f1(c.y)}" r="${f1(S * 2.6)}"/>`;
+  }
+  // Compass (only on the turn it was used)
+  if (role === 'thief' && s.compass && s.compass.turn === g.turn) {
+    const c = XY(s.pos), cp = s.compass, at = d => ({ x: c.x + cp.dx * S * d, y: c.y + cp.dy * S * d });
+    const a = at(.62), b = at(1.85), l = at(2.3);
+    over += `<line class="compass" x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(b.x)}" y2="${f1(b.y)}" marker-end="url(#arrowGold)"/>
+      <circle class="compass-dot" cx="${f1(l.x)}" cy="${f1(l.y)}" r="9"/><text class="compass-num" x="${f1(l.x)}" y="${f1(l.y)}">${cp.dist}</text>`;
+  }
+  paintBoard(R, cells, over);
+}
+
+function trail(path, k, color, off) {
+  const segs = [[]];
+  for (const p of path.filter(p => p.turn <= k)) {
+    if (p.jump) segs.push([]);
+    const c = XY(p);
+    segs[segs.length - 1].push([f1(c.x + off), f1(c.y + off)]);
+  }
+  return segs.filter(s => s.length).map(pts =>
+    `<polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" style="stroke:var(${color})" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>` +
+    pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6" style="fill:var(${color})"/>`).join('')
+  ).join('');
+}
+
+function renderReplay(g) {
+  const R = g.cfg.radius, k = ui.replayK, snap = g.history[k], final = k === g.history.length - 1, o = g.over;
+  const rocks = new Set(snap.rocks);
+  let cells = '';
+  for (const c of g.cells) {
+    const x = { cls: ['hex', 'vis'], pieces: [], items: [], titles: [] };
+    terrainBits(g, c, x, rocks);
+    if (g.exits.some(e => eq(e, c))) { x.items.push({ icon: ICON.exit }); x.titles.push('Exit'); }
+    const ci = g.chests.findIndex(ch => eq(ch, c));
+    if (ci >= 0) { x.items.push({ icon: ICON.chest, cls: snap.looted[ci] ? 'looted' : '' }); x.titles.push(snap.looted[ci] ? 'Chest (robbed)' : 'Chest'); }
+    if (snap.boxes.some(b => eq(b, c))) { x.items.push({ icon: ICON.box }); x.titles.push('Power-up box'); }
+    if (snap.traps.some(t => eq(t, c))) { x.items.push({ icon: ICON.trap }); x.titles.push('Trap'); }
+    if (snap.decoys.some(d => eq(d, c))) { x.items.push({ icon: ICON.decoy }); x.titles.push('Decoy'); }
+    const hasT = eq(c, snap.t), hasP = eq(c, snap.p);
+    if (hasP) x.pieces.push({ icon: ROLES.police.icon });
+    if (hasT) x.pieces.push({ icon: ROLES.thief.icon });
+    if (hasT && !hasP) x.pieces.reverse();
+    if (final && o.reason === 'caught' && (hasT || hasP)) x.cls.push('caught');
+    if (final && o.reason === 'escaped' && hasT) x.cls.push('escaped');
+    cells += cellSVG(R, c, x);
+  }
+  const over = snap.walls.map(w => wallSVG(w)).join('') +
+    trail(g.police.path, k, '--police', 3.5) + trail(g.thief.path, k, '--thief', -3.5);
+  paintBoard(R, cells, over);
+}
+
+/* ---------- panel ---------- */
+function renderPanel() {
+  if (ui.screen === 'plan') panelEl.innerHTML = planPanel();
+  else if (ui.screen === 'over') panelEl.innerHTML = overPanel();
+  else panelEl.innerHTML = '';
+}
+
+function logHTML(side, freshFrom, newestFirst) {
+  const entries = newestFirst ? side.log.slice().reverse() : side.log;
+  return entries.map(e =>
+    `<div class="entry ${e.turn >= freshFrom ? 'fresh' : ''} ${e.kind}"><span class="t">${e.turn === 0 ? 'Start' : 'T' + e.turn}</span><span>${e.text}</span></div>`
+  ).join('');
+}
+
+const AIM_HINT = {
+  trap: 'Tap a gold-ringed tile next to you to hide the trap.',
+  decoy: 'Tap a gold-ringed tile next to you for the decoy.',
+  net: 'Tap a gold-ringed tile (up to 2 away) to throw the net.',
+  wall: 'Tap a gold dashed edge near you to build the wall.',
+  hammer: 'Tap a gold-ringed rock or a highlighted wall next to you.',
+};
+function armedText(g, pw) {
+  switch (pw.type) {
+    case 'trap': return `🪤 Trap goes on <b>${nm(g, pw.cell)}</b> before anyone moves.`;
+    case 'decoy': return `🎭 Decoy goes on <b>${nm(g, pw.cell)}</b> before anyone moves.`;
+    case 'net': return `🕸️ Net lands on <b>${nm(g, pw.cell)}</b> after everyone moves.`;
+    case 'wall': return `🧱 Wall goes up between <b>${nm(g, pw.a)}</b> and <b>${nm(g, pw.b)}</b> before anyone moves.`;
+    case 'hammer': return pw.cell ? `🔨 You'll smash the rock on <b>${nm(g, pw.cell)}</b> before moving.` : `🔨 You'll smash the wall between <b>${nm(g, pw.a)}</b> and <b>${nm(g, pw.b)}</b> before moving.`;
+    case 'smoke': return "💨 You'll vanish in smoke this turn and next.";
+    case 'lockdown': return '🚨 Every exit gets sealed for 3 turns, starting now.';
+    case 'run': return '👟 Running — pick <b>2 steps</b> this turn.';
+  }
+  return '';
+}
+
+function powerBox(g, role) {
+  const s = g[role], p = ui.plan[role];
+  const btns = POOL[role].map((t, i) => {
+    const P = POWERS[t], on = (p.power && p.power.type === t) || ui.targeting === t;
+    const ok = on || canUsePower(role, t);
+    return `<button class="pw ${on ? 'on' : ''}" data-act="power" data-type="${t}" ${ok ? '' : 'disabled'} title="${P.name}: ${P.desc}">
+      <span class="pw-icon">${P.icon}</span><span class="pw-name">${P.name}</span><span class="pw-count">×${s.items[t]} · ${i + 1}</span></button>`;
+  }).join('');
+  let status;
+  if (ui.targeting) status = `${AIM_HINT[ui.targeting]} <kbd>Esc</kbd> cancels.`;
+  else if (p.power) status = `${armedText(g, p.power)} Tap it again to cancel.`;
+  else if (s.instantTurn === g.turn) status = 'You already used a power-up this turn.';
+  else if (!POOL[role].some(t => s.items[t])) status = `None yet — step on a ${ICON.box} box to get one.`;
+  else status = 'Optional · one per turn. What each one does: Menu → Power-ups.';
+  return `<div class="box"><div class="box-h">Power-ups</div><div class="pw-row">${btns}</div><div class="pw-status">${status}</div></div>`;
+}
+
+function effectChips(g, role) {
+  const s = g[role], ref = g.turn - 1, out = [];
+  if (s.stuck) out.push(`<span class="chip alert">😵 <b>Can't move this turn</b></span>`);
+  if (isBush(g, s.pos)) out.push(`<span class="chip fx">🌿 <b>Hidden in a bush</b></span>`);
+  if (role === 'thief' && s.smokeUntil >= ref) out.push(`<span class="chip fx">💨 <b>Invisible</b> through T${s.smokeUntil}</span>`);
+  if (g.lockUntil >= g.turn) out.push(`<span class="chip alert">🚨 <b>Exits sealed</b> through T${g.lockUntil}</span>`);
+  if (g.fx.fog >= ref) out.push(`<span class="chip fx">🌫️ <b>Fog</b> · vision ${visionOf(g, ref)}</span>`);
+  if (g.fx.moon >= ref) out.push(`<span class="chip fx">🌕 <b>Full moon</b> · vision ${visionOf(g, ref)}</span>`);
+  return out.join('');
+}
+
+const PAD = [['north-west', 'indent'], ['north-east', ''], ['west', ''], ['wait', 'wait'], ['east', ''], ['south-west', 'indent'], ['south-east', '']];
+
+function planPanel() {
+  const g = ui.game, cfg = g.cfg, role = ui.active, s = g[role], R = ROLES[role];
+  const need = stepsNeeded(role), stuck = !!s.stuck, steps = planSteps(role);
+  const ready = stuck || steps.length >= need;
+  const turnsLeft = cfg.maxTurns - g.turn + 1;
+  const modeLabel = ui.playMode === 'hotseat' ? '2 players · pass & play' : `vs AI ${ROLES[R.other].name.toLowerCase()}`;
+  const lootNeed = cfg.lootToWin;
+  let goal, chips;
+
+  if (role === 'thief') {
+    const left = lootNeed - s.loot;
+    goal = left > 0
+      ? `Find ${left === 1 ? 'a chest' : left + ' chests'} ${ICON.chest} — you don't know where they are — then escape through an exit ${ICON.exit}.`
+      : `You've got the loot — reach an exit ${ICON.exit} without getting caught!`;
+    chips = [`Loot <b>${s.loot}/${lootNeed}</b>`, `Chests spotted <b>${s.knownChests.size}/${g.chests.length}</b>`];
+  } else {
+    goal = `Catch the thief before turn ${cfg.maxTurns} ends. You know the chests ${ICON.chest}; the exits are hidden from you.`;
+    chips = [`Chests robbed <b>${s.chestState.filter(Boolean).length}/${g.chests.length}</b>`, `Exits found <b>${s.knownExits.size}/${g.exits.length}</b>`];
+  }
+  const ls = s.lastSeenOpp;
+  const seenTxt = !ls ? 'never' : (ls.turn === g.turn - 1 && s.oppVisible) ? 'now' : ls.via === 'radar' ? '📡 now' : ls.turn === 0 ? 'at start' : 'T' + ls.turn;
+  chips.push(`${ROLES[R.other].name} last seen <b>${seenTxt}</b>`);
+  const chipHTML = chips.map(c => `<span class="chip">${c}</span>`).join('') + effectChips(g, role);
+
+  const news = s.log.filter(e => e.turn >= g.turn - 1 && (e.kind === 'alert' || e.kind === 'event'));
+  const newsHTML = news.length ? `<div class="box news">${news.map(e => `<div class="news-item ${e.kind}">${e.text}</div>`).join('')}</div>` : '';
+
+  const origin = stepOrigin(role);
+  const legal = stuck ? [] : legalMoves(g, role, origin, planMods(role));
+  const last = steps[steps.length - 1];
+  const pad = PAD.map(([name, cls]) => {
+    const m = moveByName(name);
+    return `<button data-act="move" data-move="${name}" class="${cls} ${!stuck && last === m && steps.length === need ? 'sel' : ''}" ${legal.includes(m) && !ui.targeting ? '' : 'disabled'} aria-label="${cap(name)}">${m.label}</button>`;
+  }).join('');
+
+  const pts = walk(g, s.pos, steps);
+  let plannedText;
+  if (stuck) plannedText = "you can't move this turn";
+  else if (!steps.length) plannedText = need === 2 ? 'pick step 1 of 2' : 'pick one';
+  else plannedText = steps.map((m, i) => (need === 2 ? `${i + 1}. ` : '') + (isWait(m) ? 'wait' : `${m.name} → ${nm(g, pts[i])}`)).join(' · ') + (steps.length < need ? ' · now step 2' : '');
+  const lockLabel = ui.playMode === 'hotseat' && role === 'thief' ? 'Lock in · pass to Police' : 'Lock in move';
+
+  return `
+  <div class="box">
+    <div class="role-head">
+      <span class="role-icon">${R.icon}</span>
+      <div><div class="role-name">${R.name.toUpperCase()}</div><div class="muted small">${modeLabel}</div></div>
+      <div class="turn"><b>Turn ${g.turn}</b><span class="muted"> / ${cfg.maxTurns}</span><div class="muted small">${plural(turnsLeft, 'turn')} left</div></div>
+    </div>
+    <div class="goal">${goal}</div>
+    <div class="chips">${chipHTML}</div>
+  </div>
+  ${newsHTML}
+  ${powerBox(g, role)}
+  <div class="box">
+    <div class="box-h">Your move <span class="muted small">${plannedText}</span></div>
+    <div class="hexpad">${pad}</div>
+    <button class="primary" data-act="lock" ${ready ? '' : 'disabled'}>${lockLabel}</button>
+    <div class="hint">Tap a highlighted tile, or keys <kbd>W</kbd><kbd>E</kbd> <kbd>A</kbd><kbd>D</kbd> <kbd>Z</kbd><kbd>X</kbd> · <kbd>S</kbd> wait · <kbd>1</kbd>–<kbd>${POOL[role].length}</kbd> power-ups · <kbd>Enter</kbd> lock in</div>
+  </div>
+  <div class="box">
+    <div class="box-h">What you know <span class="muted small">newest first</span></div>
+    <div class="log">${logHTML(s, g.turn - 1, true)}</div>
+  </div>
+  <div class="row">
+    <label class="toggle"><input type="checkbox" id="reveal" ${ui.debugReveal ? 'checked' : ''}> Reveal whole map (debug)</label>
+    <button class="link-btn" data-act="menu">Menu</button>
+  </div>`;
+}
+
+const replayLabel = k => k === 0 ? 'Start' : `After turn ${k}`;
+
+function overPanel() {
+  const g = ui.game, o = g.over, last = g.history.length - 1;
+  const titles = {
+    escaped: `${ROLES.thief.icon} The thief escaped!`,
+    caught: `${ROLES.police.icon} The thief was caught!`,
+    time: "⏰ Time's up — police wins",
+  };
+  return `
+  <div class="box result">
+    <div class="eyebrow">${ROLES[o.winner].name} wins</div>
+    <h2>${titles[o.reason]}</h2>
+    <p class="muted">${o.detail}</p>
+  </div>
+  <div class="box">
+    <div class="box-h">Replay <span class="muted" id="rpLabel">${replayLabel(ui.replayK)}</span></div>
+    <div class="replay">
+      <button data-act="rp-prev" aria-label="Previous turn">◀</button>
+      <input type="range" id="rpRange" min="0" max="${last}" value="${ui.replayK}" aria-label="Replay turn">
+      <button data-act="rp-next" aria-label="Next turn">▶</button>
+      <button data-act="rp-play">${ui.replayTimer ? 'Pause' : 'Play'}</button>
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--thief)"></i>Thief path</span>
+      <span><i class="swatch" style="background:var(--police)"></i>Police path</span>
+      <span><i class="swatch" style="background:var(--wall)"></i>Built wall</span>
+      <span><i class="swatch" style="background:var(--wall-map)"></i>Map wall</span>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="primary" data-act="rematch">Replay same map</button>
+    <button class="secondary" data-act="newmap">New map</button>
+    <button class="link-btn" data-act="menu">Menu / settings</button>
+  </div>
+  <div class="box"><div class="box-h">🦹 Thief's log</div><div class="log">${logHTML(g.thief, Infinity, false)}</div></div>
+  <div class="box"><div class="box-h">👮 Police's log</div><div class="log">${logHTML(g.police, Infinity, false)}</div></div>`;
+}
+
+/* ---------- replay controls ---------- */
+function setReplay(k) {
+  ui.replayK = clamp(k, 0, ui.game.history.length - 1);
+  renderBoard();
+  const r = $('#rpRange'); if (r) r.value = ui.replayK;
+  const l = $('#rpLabel'); if (l) l.textContent = replayLabel(ui.replayK);
+}
+function toggleReplay() {
+  if (ui.replayTimer) return stopReplay();
+  if (ui.replayK >= ui.game.history.length - 1) setReplay(0);
+  ui.replayTimer = setInterval(() => {
+    if (ui.replayK >= ui.game.history.length - 1) return stopReplay();
+    setReplay(ui.replayK + 1);
+  }, 550);
+  updatePlayBtn();
+}
+function stopReplay() {
+  clearInterval(ui.replayTimer);
+  ui.replayTimer = null;
+  updatePlayBtn();
+}
+function updatePlayBtn() {
+  const b = $('[data-act="rp-play"]');
+  if (b) b.textContent = ui.replayTimer ? 'Pause' : 'Play';
+}
+
+/* ---------- overlay: menu + pass-the-device screen ---------- */
+function renderOverlay() {
+  if (ui.screen === 'menu') { overlayEl.hidden = false; overlayEl.innerHTML = menuHTML(); }
+  else if (ui.screen === 'cover') { overlayEl.hidden = false; overlayEl.innerHTML = coverHTML(); }
+  else { overlayEl.hidden = true; overlayEl.innerHTML = ''; }
+}
+
+function rulesHTML(c) {
+  const need = Math.min(c.lootToWin, c.chests);
+  const sees = c.vision === 0 ? 'only your own tile' : c.vision === 1 ? 'your tile and the 6 around it' : `everything within ${c.vision} tiles`;
+  return `
+    <li><b>Thief ${ROLES.thief.icon}</b> knows where the ${c.exits === 1 ? 'exit 🚪 is' : 'exits 🚪 are'} but not the chests.
+      ${need ? `Rob ${need === 1 ? 'a chest' : need + ' chests'} 💰 (step on it), then step on an exit.` : 'Step on an exit to escape.'}</li>
+    <li><b>Police ${ROLES.police.icon}</b> knows where the ${c.chests === 1 ? 'chest 💰 is' : 'chests 💰 are'} but not the exits. Catch the thief before turn ${c.maxTurns} ends.</li>
+    <li>Each turn you both secretly pick one of <b>6 directions</b> or wait. Both moves happen <b>at the same time</b>.</li>
+    <li>You see ${sees}. Tiles you've explored stay mapped; your opponent's last known spot shows as a faded ghost.</li>
+    <li>Caught = you end on the same tile${c.swapCatch ? ', or you swap places with each other' : ''}.${c.alarm ? ' Robbing a chest sets off an alarm the police hears.' : ''}</li>
+    <li><b>Mystery boxes ${ICON.box}</b> appear now and then and both players see them. Step on one for a random power-up — ${c.boxSurprises ? 'sometimes two, sometimes it <b>explodes</b> and you lose a turn — ' : ''}but the other player sees it vanish. Use one power-up per turn; it happens before anyone moves.</li>`;
+}
+
+function listHTML(rows) {
+  return rows.map(([icon, name, who, desc]) => `<div class="pw-item"><span class="pw-icon">${icon}</span>
+    <div><b>${name}</b><span class="who ${who}">${who}</span><div class="muted small">${desc}</div></div></div>`).join('');
+}
+const TERRAIN_ROWS = [
+  [ICON.rock, 'Rock', 'map', 'Blocks the tile. Nobody can walk through it — but a hammer can smash it.'],
+  [ICON.bush, 'Bush', 'map', "Whoever stands inside can't be seen, even from right next to it. Step in to check!"],
+  ['▬', 'Wall', 'map', 'Blocks the edge between two tiles. Grey walls come with the map; tan ones are built by the thief.'],
+  [ICON.tunnel, 'Tunnel', 'map', 'Step into one end and you pop out of the other end in the same step.'],
+];
+
+function menuHTML() {
+  const c = ui.cfg;
+  const modes = [
+    ['hotseat', '👥', '2 players', 'one device, pass & play'],
+    ['thief', ROLES.thief.icon, 'Play Thief', 'vs AI police'],
+    ['police', ROLES.police.icon, 'Play Police', 'vs AI thief'],
+  ];
+  const settings = SETTINGS.map(s => {
+    if (s.group) return `<div class="set-group">${s.group}</div>`;
+    const id = 'cfg-' + s.k;
+    const input = s.type === 'bool'
+      ? `<input type="checkbox" id="${id}" data-cfg="${s.k}" ${c[s.k] ? 'checked' : ''}>`
+      : `<input type="number" id="${id}" data-cfg="${s.k}" min="${s.min}" max="${s.max}" value="${c[s.k]}">`;
+    return `<label class="set-label" for="${id}">${s.label}${s.hint ? `<small>${s.hint}</small>` : ''}</label>${input}`;
+  }).join('');
+  const powers = Object.entries(POWERS).map(([, P]) => [P.icon, P.name, P.who, P.desc]);
+  const events = Object.values(EVENTS).map(E => [E.icon, E.name, 'event', E.desc]);
+  const resume = ui.game && !ui.game.over ? '<button class="secondary" data-act="resume">Resume current game</button>' : '';
+  return `
+  <div class="card">
+    <h1>Heist Royale</h1>
+    <p class="lead">A thief and the police on a hidden hex board. You both move <b>at the same time</b> and only see the tiles right around you — read your opponent and guess their next step.</p>
+    <div class="label">Mode</div>
+    <div class="seg">${modes.map(([m, em, t, sub]) =>
+      `<button data-act="mode" data-mode="${m}" class="${ui.mode === m ? 'on' : ''}"><span class="em">${em}</span><span>${t}</span><span class="sub">${sub}</span></button>`).join('')}
+    </div>
+    <details open><summary>How to play</summary><ul id="rules">${rulesHTML(c)}</ul></details>
+    <details><summary>The map</summary><div class="pw-list">${listHTML(TERRAIN_ROWS)}</div></details>
+    <details><summary>Power-ups (${Object.keys(POWERS).length})</summary><div class="pw-list">${listHTML(powers)}</div></details>
+    <details><summary>Random events</summary><div class="pw-list">${listHTML(events)}</div></details>
+    <details id="settings"><summary>Rules &amp; settings</summary>
+      <div class="settings-grid">${settings}</div>
+      <div class="row" style="margin-top:14px">
+        <button class="link-btn" data-act="reset-cfg">Reset to defaults</button>
+        <button class="link-btn" data-act="simulate">Simulate 300 AI games</button>
+      </div>
+      <div class="sim" id="sim">${ui.simResult}</div>
+    </details>
+    <div class="menu-actions">
+      ${resume}
+      <button class="primary" data-act="start">Start new game</button>
+    </div>
+  </div>`;
+}
+
+function coverHTML() {
+  const g = ui.game, R = ROLES[ui.active], O = ROLES[R.other];
+  const sub = ui.active === 'police' ? `The thief has locked in a move. ${O.name}, look away!` : `${O.name}, look away!`;
+  return `
+  <div class="card cover">
+    <div class="cover-icon">${R.icon}</div>
+    <div class="muted small">Turn ${g.turn} of ${g.cfg.maxTurns}</div>
+    <h2>Pass to the ${R.name}</h2>
+    <p>${sub}</p>
+    <button class="primary" data-act="show-view">I'm the ${R.name} — show my board</button>
+    <div class="hint">or press <kbd>Enter</kbd></div>
+  </div>`;
+}
+
+function runSim() {
+  const N = 300, el = $('#sim');
+  el.textContent = 'Simulating…';
+  setTimeout(() => {
+    const r = simulate(ui.cfg, N);
+    const pct = x => Math.round(100 * x / N) + '%', avg = x => (x / N).toFixed(1);
+    ui.simResult = `<b style="color:var(--thief)">Thief ${pct(r.thief)}</b> · <b style="color:var(--police)">Police ${pct(r.caught + r.time)}</b>
+      <span class="muted">(caught ${pct(r.caught)}, time-out ${pct(r.time)}) · avg ${avg(r.turns)} turns ·
+      per game: ${avg(r.spawned)} boxes, ${avg(r.used)} power-ups used, ${avg(r.events)} events</span>
+      <div class="muted small">Basic AI vs basic AI on ${N} random maps — a rough balance signal, not the truth.</div>`;
+    el.innerHTML = ui.simResult;
+  }, 20);
+}
+
+/* ---------- events ---------- */
+boardEl.addEventListener('click', e => {
+  if (ui.screen !== 'plan') return;
+  const edge = e.target.closest('.edge-target');
+  if (edge && ui.targeting) return aimAt(t => t.k === edge.dataset.edge);
+  const cell = e.target.closest('.hex');
+  if (cell) clickCell({ q: +cell.dataset.q, r: +cell.dataset.r });
+});
+
+panelEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || b.disabled) return;
+  const g = ui.game;
+  switch (b.dataset.act) {
+    case 'move': chooseStep(moveByName(b.dataset.move)); break;
+    case 'power': clickPower(b.dataset.type); break;
+    case 'lock': lockIn(); break;
+    case 'menu': openMenu(); break;
+    case 'rematch': startGame(g.cfg, ui.map, ui.playMode); break;
+    case 'newmap': startGame(g.cfg, null, ui.playMode); break;
+    case 'rp-prev': stopReplay(); setReplay(ui.replayK - 1); break;
+    case 'rp-next': stopReplay(); setReplay(ui.replayK + 1); break;
+    case 'rp-play': toggleReplay(); break;
+  }
+});
+panelEl.addEventListener('change', e => {
+  if (e.target.id === 'reveal') { ui.debugReveal = e.target.checked; renderBoard(); }
+});
+panelEl.addEventListener('input', e => {
+  if (e.target.id === 'rpRange') { stopReplay(); setReplay(+e.target.value); }
+});
+
+overlayEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  switch (b.dataset.act) {
+    case 'mode':
+      ui.mode = b.dataset.mode; store.set('chase.mode', ui.mode);
+      overlayEl.querySelectorAll('[data-act="mode"]').forEach(x => x.classList.toggle('on', x === b));
+      break;
+    case 'start': startGame(ui.cfg, null, ui.mode); break;
+    case 'resume': ui.screen = ui.playMode === 'hotseat' ? 'cover' : 'plan'; render(); break;
+    case 'show-view': ui.screen = 'plan'; render(); break;
+    case 'reset-cfg':
+      ui.cfg = { ...DEFAULT_CFG }; store.set('chase.cfg.v3', ui.cfg); ui.simResult = '';
+      render(); $('#settings').open = true;
+      break;
+    case 'simulate': runSim(); break;
+  }
+});
+overlayEl.addEventListener('change', e => {
+  const k = e.target.dataset.cfg;
+  if (!k) return;
+  const s = SETTINGS.find(s => s.k === k);
+  ui.cfg[k] = s.type === 'bool' ? e.target.checked : clamp(parseInt(e.target.value, 10) || s.min, s.min, s.max);
+  ui.cfg.lootToWin = Math.min(ui.cfg.lootToWin, ui.cfg.chests);
+  store.set('chase.cfg.v3', ui.cfg);
+  overlayEl.querySelectorAll('[data-cfg]').forEach(inp => {
+    if (inp.type === 'checkbox') inp.checked = ui.cfg[inp.dataset.cfg];
+    else inp.value = ui.cfg[inp.dataset.cfg];
+  });
+  $('#rules').innerHTML = rulesHTML(ui.cfg);
+  ui.simResult = ''; $('#sim').innerHTML = '';
+});
+
+// Hex keys around S on a staggered keyboard: W E / A (S) D / Z X
+const KEYS = {
+  w: 'north-west', e: 'north-east', a: 'west', d: 'east', z: 'south-west', x: 'south-east',
+  arrowleft: 'west', arrowright: 'east', s: 'wait', ' ': 'wait',
+};
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.matches && e.target.matches('input, select, textarea')) return;
+  const k = e.key.toLowerCase();
+  if (ui.screen === 'cover' && (k === 'enter' || k === ' ')) { e.preventDefault(); ui.screen = 'plan'; render(); return; }
+  if (ui.screen === 'over') {
+    if (k === 'arrowleft') { e.preventDefault(); stopReplay(); setReplay(ui.replayK - 1); }
+    if (k === 'arrowright') { e.preventDefault(); stopReplay(); setReplay(ui.replayK + 1); }
+    return;
+  }
+  if (ui.screen !== 'plan') return;
+  if (k === 'enter') { e.preventDefault(); lockIn(); return; }
+  if (k === 'escape' && ui.targeting) { ui.targeting = null; render(); return; }
+  if (/^[1-9]$/.test(k)) { const t = POOL[ui.active][+k - 1]; if (t) { e.preventDefault(); clickPower(t); } return; }
+  if (KEYS[k]) { e.preventDefault(); chooseStep(moveByName(KEYS[k])); }
+});
+
+// Handy for poking at the engine from the console.
+window.chase = {
+  ui, simulate: (n = 300, cfg = ui.cfg) => simulate(cfg, n),
+  genMap, newGame, resolve, aiThief, aiPolice, useInstant, targetsFor, distField, legalMoves, isConnected, boardCells,
+};
+
+render();
+})();
+</script>
+</body>
+</html>

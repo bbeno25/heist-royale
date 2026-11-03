@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="giDlBox" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8080"/><stop offset="1" stop-color="#B8222F"/></linearGradient>
+        <linearGradient id="giDlLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF9A9A"/><stop offset="1" stop-color="#D63A46"/></linearGradient>
+        <linearGradient id="giDlRib" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E0A000"/><stop offset="0.5" stop-color="#FFE15C"/><stop offset="1" stop-color="#E0A000"/></linearGradient>
+      </defs>
+      <ellipse cx="32" cy="60" rx="21" ry="3" fill="#000000" opacity="0.28"/>
+      <rect x="12" y="29" width="40" height="28" rx="3" fill="url(#giDlBox)" stroke="#7E1520" stroke-width="1.4"/>
+      <rect x="44" y="31" width="8" height="26" fill="#000000" opacity="0.13"/>
+      <rect x="28" y="29" width="8" height="28" fill="url(#giDlRib)"/>
+      <rect x="9" y="21" width="46" height="10" rx="3" fill="url(#giDlLid)" stroke="#7E1520" stroke-width="1.4"/>
+      <rect x="27.5" y="21" width="9" height="10" fill="url(#giDlRib)"/>
+      <path d="M32 21 C23 6 9 11 19 21 Z" fill="#FFC21A" stroke="#C98A00" stroke-width="1.2"/>
+      <path d="M32 21 C41 6 55 11 45 21 Z" fill="#FFC21A" stroke="#C98A00" stroke-width="1.2"/>
+      <path d="M30 20 C25 13 19 13 21 18" fill="none" stroke="#FFF1A8" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="32" cy="21" r="4" fill="#FFE15C" stroke="#C98A00" stroke-width="1.2"/>
+      <path d="M15 33 L15 52" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" opacity="0.45"/>
+      <path d="M56 4 L57.2 7.8 L61 9 L57.2 10.2 L56 14 L54.8 10.2 L51 9 L54.8 7.8 Z" fill="#FFFFFF"/>
+      <path d="M6 12 L6.8 14.2 L9 15 L6.8 15.8 L6 18 L5.2 15.8 L3 15 L5.2 14.2 Z" fill="#FFFFFF"/>
+    </svg>

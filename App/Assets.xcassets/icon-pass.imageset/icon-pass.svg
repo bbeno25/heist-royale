@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="giPsG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1A8"/><stop offset="0.5" stop-color="#FFCB3D"/><stop offset="1" stop-color="#E08A00"/></linearGradient>
+      </defs>
+      <ellipse cx="32" cy="58" rx="22" ry="3" fill="#000000" opacity="0.28"/>
+      <g transform="rotate(-14 32 32)">
+        <path d="M6 19 H58 V27 A5 5 0 0 0 58 37 V45 H6 V37 A5 5 0 0 0 6 27 Z" fill="#B9801A" transform="translate(0 2)"/>
+        <path d="M6 19 H58 V27 A5 5 0 0 0 58 37 V45 H6 V37 A5 5 0 0 0 6 27 Z" fill="url(#giPsG)" stroke="#B9801A" stroke-width="1.4"/>
+        <path d="M44 21 L44 43" stroke="#B9801A" stroke-width="1.6" stroke-dasharray="2 2.6"/>
+        <path d="M25 22 L27.8 28 L34.3 28.7 L29.4 33.1 L30.8 39.5 L25 36.2 L19.2 39.5 L20.6 33.1 L15.7 28.7 L22.2 28 Z" fill="#FFFFFF" stroke="#D97A00" stroke-width="1.2"/>
+        <rect x="47" y="25" width="7" height="3" rx="1.5" fill="#D97A00"/>
+        <rect x="47" y="31" width="7" height="3" rx="1.5" fill="#D97A00"/>
+        <rect x="47" y="37" width="5" height="3" rx="1.5" fill="#D97A00"/>
+        <path d="M9 22 L40 22" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <path d="M54 46 L55.2 49.8 L59 51 L55.2 52.2 L54 56 L52.8 52.2 L49 51 L52.8 49.8 Z" fill="#FFFFFF"/>
+      <path d="M8 4 L8.9 6.6 L11.5 7.5 L8.9 8.4 L8 11 L7.1 8.4 L4.5 7.5 L7.1 6.6 Z" fill="#FFFFFF"/>
+    </svg>
