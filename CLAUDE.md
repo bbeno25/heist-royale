@@ -11,19 +11,20 @@ Two-player, simultaneous-move thief vs police game on a hidden hex board. Native
 
 ## Layout
 
-- `HeistCore/`: Swift package, no UI code. Hex geometry, the round engine (`Round`: prep and chase, ported from the app's `SampleRound` plus map walls), map generator, dealer, the bot, the `Tournament` series rules and the wire protocol (`Protocol.swift`), with tests.
-- `Server/`: the game server package. `ServerCore` (matchmaker, match rooms, Elo, player store; no network code, tested with in-memory links), `HeistServer` (Hummingbird WebSocket at `/ws`, `/health`), `heist-client` (a command-line player for end-to-end runs). Data goes to `DATA_DIR` (default `./data`) as JSON files.
-- `App/`: the iOS app (SwiftUI; RealityKit board). It doesn't use the server yet.
+- `HeistCore/`: Swift package, no UI code, two libraries. `HeistCore`: hex geometry, the round engine (`Round`: prep and chase plus map walls), map generator, dealer, the bot, the `Tournament` series rules, Elo and the wire protocol (`Protocol.swift`). `ServerCore`: the server's logic without the network (matchmaker, match rooms, player store), tested with in-memory links; the app also runs it in-process for the offline match.
+- `Server/`: the game server executable, `HeistServer` (Hummingbird WebSocket at `/ws`, `/health`), and `heist-client` (a command-line player for end-to-end runs). Data goes to `DATA_DIR` (default `./data`) as JSON files. `Server/deploy/` ships it to the dev VM.
+- `App/`: the iOS app (SwiftUI; RealityKit board). `App/Online` holds the server connection (`GameConnection`) and the guest token in the Keychain.
 - `project.yml`: XcodeGen spec. `HeistRoyale.xcodeproj` is generated from it and committed so it opens without XcodeGen.
 
 ## Commands
 
 ```bash
 xcodegen generate                         # after editing project.yml or adding/removing files
-(cd HeistCore && swift test)              # engine tests, on the Mac
-(cd Server && swift test)                 # server tests (matches play out at 1/100 speed)
+(cd HeistCore && swift test)              # engine and server-logic tests (matches play out at 1/100 speed)
 (cd Server && swift run HeistServer)      # local server on :8080; PORT, DATA_DIR, TIMER_SCALE=0.05 for fast timers
 (cd Server && swift run heist-client --name Ada --url ws://localhost:8080/ws)   # plays one whole match; run two to meet each other
+Server/deploy/deploy.sh                   # ship Server/ + HeistCore/ to the dev server (Cloud Build image, then VM restart; ~12 min)
+curl https://136-64-123-56.sslip.io/health   # dev server (e2-micro VM, Caddy HTTPS); play it with --url wss://136-64-123-56.sslip.io/ws
 xcodebuild -project HeistRoyale.xcodeproj -scheme HeistRoyale -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -derivedDataPath build/DerivedData build
 xcrun simctl launch booted com.benostudio.heistroyale -timeOfDay night   # debug builds: force morning/evening/night downtown
 SIMCTL_CHILD_TZ=Asia/Tokyo xcrun simctl launch booted com.benostudio.heistroyale   # or test the real clock via a time zone
@@ -33,11 +34,11 @@ The home scenery and logos are drawn in code from the design files; characters a
 
 ## Match screens
 
-- PLAY on home opens a Classic sample match against a bot (best of 8, first to 5): coin flip, role reveal, rounds, round result with a 3D replay, series scoreboard and match end. `App/Match/SampleRound.swift` is a stand-in rules engine; the real one is HeistCore's `Round`, which the app moves to when it goes online. Don't grow the stand-in. Until then the app's own `Role`, `CardID` and similar types shadow HeistCore's.
+- PLAY on home joins the Tournament queue on the dev server (another player, or a bot after 10 s): finding an opponent, coin flip, role reveal, rounds, round result with a 3D replay, series scoreboard and match end. `MatchModel` turns server messages into screens, paced by the server's deadlines (each envelope carries the server clock); the board is drawn from the player's `PlayerView` only. The app uses HeistCore's `Role`, `CardID` and other types; their app-only looks (colours, art, effect text) are extensions in `MatchRules.swift`. Notes are worded by the app (`MatchNotes.swift`) with its own tile names.
 - The board is a live RealityKit scene (`App/Match/Board3D`) built to match the design's 3D renders; meeple tokens and card faces are the design's renders (`Assets.xcassets/Renders`). Tags, taps and VoiceOver sit on top using the same camera maths (`BoardCamera`).
 - Don't put `accessibilityChildren` (or similar synthesised-accessibility modifiers) on a container around the RealityView: it stops the 3D view from getting a drawable and the board renders blank.
 - Only one board RealityView at a time: one created while another is still in the view tree (e.g. fading out) gets no drawables and stays blank. `LiveBoards` counts them; the round result's replay waits for the round's board to leave.
-- Debug launch arguments: `-openMatch YES` (straight into a match), `-matchRole thief|police`, `-matchTimerScale 6` (slower timers for testing), `-matchTurns 3` (short chase), `-matchRounds 2` (short series), `-matchJumpToResult YES` (skip to round 1's result).
+- Debug launch arguments: `-openMatch YES` (straight into a match), `-serverURL ws://localhost:8080/ws` (a server on this Mac; run it with `TIMER_SCALE=0.25` for quick full matches), `-offlineMatch YES` (play the in-app server against a bot, no network), `-matchTimerScale 6` (slower timers for the offline match), `-playerName Ada` (the name to sign up with).
 
 ## Settings
 

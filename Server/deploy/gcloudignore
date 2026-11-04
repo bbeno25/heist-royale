@@ -1,0 +1,8 @@
+# What deploy.sh uploads to Cloud Build: the two Swift packages and nothing else.
+/*
+!/HeistCore/
+!/Server/
+.build/
+.swiftpm/
+/Server/data/
+.DS_Store

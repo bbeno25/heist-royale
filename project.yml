@@ -21,6 +21,9 @@ targets:
       - path: App
     dependencies:
       - package: HeistCore
+        product: HeistCore
+      - package: HeistCore
+        product: ServerCore
     entitlements:
       path: App/HeistRoyale.entitlements
       properties:
@@ -38,6 +41,9 @@ targets:
           - Baloo2.ttf
         UILaunchScreen:
           UIColorName: LaunchBackground
+        # Debug builds can play against a game server running on this Mac (-serverURL ws://localhost:8080/ws).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     settings:
       base:
         PRODUCT_NAME: HeistRoyale

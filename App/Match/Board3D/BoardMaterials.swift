@@ -1,3 +1,4 @@
+import HeistCore
 import RealityKit
 import UIKit
 

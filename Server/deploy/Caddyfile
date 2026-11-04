@@ -1,0 +1,5 @@
+# Caddy in front of the game server on the dev VM: HTTPS for HEIST_HOST with a Let's Encrypt
+# certificate it renews itself, proxying everything (GET /health, the WebSocket at /ws) to the server.
+{$HEIST_HOST} {
+	reverse_proxy heist-server:8080
+}

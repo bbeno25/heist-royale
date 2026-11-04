@@ -20,7 +20,9 @@ final class BoardWorld {
     private let propLayer = Entity()
     private let markLayer = Entity()
     private let pawnLayer = Entity()
+    private let wallLayer = Entity()
     private var tiles: [Hex: Entity] = [:]
+    private var walls: [Wall: Entity] = [:]
     private var props: [Hex: (art: String, entity: Entity)] = [:]
     private var marks: [Hex: (overlay: TileOverlay, entity: Entity)] = [:]
     private var glow: (key: TileGlow, entity: Entity)?
@@ -33,7 +35,7 @@ final class BoardWorld {
         addLights()
         addSea()
         addDock()
-        for layer in [tileLayer, propLayer, markLayer, pawnLayer] { root.addChild(layer) }
+        for layer in [tileLayer, wallLayer, propLayer, markLayer, pawnLayer] { root.addChild(layer) }
         addTiles()
     }
 
@@ -47,6 +49,7 @@ final class BoardWorld {
 
     func update(_ scene: BoardScene) {
         updateProps(scene.props)
+        updateWalls(scene.walls)
         updateMarks(scene.overlays)
         updateGlow(scene.glow)
         updateFog(scene.fog)
@@ -68,6 +71,34 @@ final class BoardWorld {
         for (tile, entity) in tiles {
             entity.isEnabled = wanted[tile] != "art-exit"
         }
+    }
+
+    private func updateWalls(_ wanted: [Wall]) {
+        let keep = Set(wanted)
+        for (wall, entity) in walls where !keep.contains(wall) {
+            entity.removeFromParent()
+            walls[wall] = nil
+        }
+        for wall in wanted where walls[wall] == nil {
+            let entity = Self.wallPiece(wall, materials)
+            wallLayer.addChild(entity)
+            walls[wall] = entity
+        }
+    }
+
+    /// A low wooden wall standing on the edge between two tiles, capped like the mooring posts.
+    private static func wallPiece(_ wall: Wall, _ materials: BoardMaterials) -> Entity {
+        let a = BoardCamera.center(wall.a), b = BoardCamera.center(wall.b)
+        let across = SIMD2(Float(b.x - a.x), Float(b.y - a.y))
+        let length = simd_length(across) / Float(3).squareRoot()
+        let piece = Entity()
+        piece.addChild(BoardProp.model(.generateBox(width: length * 0.92, height: 0.3, depth: 0.16, cornerRadius: 0.03), materials.chestWood, at: [0, 0.15, 0]))
+        piece.addChild(BoardProp.model(.generateBox(width: length * 0.98, height: 0.06, depth: 0.22, cornerRadius: 0.02), BoardProp.color(0xC08A55, roughness: 0.7), at: [0, 0.32, 0]))
+        piece.position = [Float(a.x + b.x) / 2, tileTop, Float(a.y + b.y) / 2]
+        // Turn the piece so its length runs along the shared edge, square to the line between the tiles.
+        let along = SIMD2(-across.y, across.x)
+        piece.orientation = simd_quatf(angle: atan2(-along.y, along.x), axis: [0, 1, 0])
+        return piece
     }
 
     private func updateMarks(_ wanted: [Hex: TileOverlay]) {

@@ -1,5 +1,4 @@
 import Foundation
-import HeistCore
 
 /// The rating rules, decided 3 Nov 2026: Elo, with an overall rating that moves once per match and a
 /// thief and a police rating that move after every round played in that role.

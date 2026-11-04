@@ -6,12 +6,23 @@ public struct PlayerView: Codable, Sendable, Equatable {
         public var tile: Hex
         public var robbed: Bool
         public var reinforced: Bool
+
+        public init(tile: Hex, robbed: Bool, reinforced: Bool) {
+            self.tile = tile
+            self.robbed = robbed
+            self.reinforced = reinforced
+        }
     }
 
     public struct Security: Codable, Sendable, Equatable {
         public var tile: Hex
         /// The thief sees a dummy camera as a camera.
         public var kind: Round.SecurityKind
+
+        public init(tile: Hex, kind: Round.SecurityKind) {
+            self.tile = tile
+            self.kind = kind
+        }
     }
 
     public var role: Role
@@ -65,6 +76,39 @@ public struct PlayerView: Codable, Sendable, Equatable {
     public var cards: [CardID]
     /// An instant card was already played this turn (one card per turn).
     public var instantUsed: Bool
+
+    public init(role: Role, stage: Round.Stage, turn: Int, turnLimit: Int, radius: Int, position: Hex, thiefStart: Hex, policeStart: Hex, rocks: [Hex], bushes: [Hex], walls: [Wall], tunnels: [Tunnel], exits: [Hex], chests: [Chest], security: [Security], lookouts: [Hex], smokeCaches: [Hex], boxes: [Hex], visible: [Hex], seen: [Hex], opponent: Sighting?, opponentVisible: Bool, alarm: Sighting?, hasLoot: Bool, cracking: Hex?, smokeThrough: Int, lockdownThrough: Int, camerasOffThrough: Int, cards: [CardID], instantUsed: Bool) {
+        self.role = role
+        self.stage = stage
+        self.turn = turn
+        self.turnLimit = turnLimit
+        self.radius = radius
+        self.position = position
+        self.thiefStart = thiefStart
+        self.policeStart = policeStart
+        self.rocks = rocks
+        self.bushes = bushes
+        self.walls = walls
+        self.tunnels = tunnels
+        self.exits = exits
+        self.chests = chests
+        self.security = security
+        self.lookouts = lookouts
+        self.smokeCaches = smokeCaches
+        self.boxes = boxes
+        self.visible = visible
+        self.seen = seen
+        self.opponent = opponent
+        self.opponentVisible = opponentVisible
+        self.alarm = alarm
+        self.hasLoot = hasLoot
+        self.cracking = cracking
+        self.smokeThrough = smokeThrough
+        self.lockdownThrough = lockdownThrough
+        self.camerasOffThrough = camerasOffThrough
+        self.cards = cards
+        self.instantUsed = instantUsed
+    }
 
     public var terrain: Terrain {
         Terrain(radius: radius, rocks: rocks, walls: walls, tunnels: tunnels)

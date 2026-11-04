@@ -1,0 +1,49 @@
+#cloud-config
+# The dev VM, on Container-Optimized OS. COS keeps /etc in memory, so this runs on every boot: it writes
+# two systemd units, the game server and Caddy in front of it for HTTPS, and starts them.
+# State lives on the boot disk under /var/lib/heist: data/ (players.json, matches/) and caddy/ (certificates).
+# The Caddyfile and the public host name come from instance metadata (caddyfile, heist-host); see setup.sh.
+
+write_files:
+- path: /etc/systemd/system/heist-server.service
+  permissions: "0644"
+  content: |
+    [Unit]
+    Description=Heist Royale game server
+    Wants=gcr-online.target
+    After=gcr-online.target docker.service
+
+    [Service]
+    Environment=HOME=/home/heist
+    Environment=IMAGE=us-central1-docker.pkg.dev/benostudio-heistroyale/heist/heist-server:latest
+    ExecStartPre=/usr/bin/docker-credential-gcr configure-docker --registries us-central1-docker.pkg.dev
+    ExecStartPre=-/usr/bin/docker pull ${IMAGE}
+    ExecStartPre=-/usr/bin/docker rm -f heist-server
+    ExecStart=/usr/bin/docker run --rm --name heist-server --network heist -v /var/lib/heist/data:/data ${IMAGE}
+    ExecStop=/usr/bin/docker stop heist-server
+    Restart=always
+    RestartSec=5
+
+- path: /etc/systemd/system/caddy.service
+  permissions: "0644"
+  content: |
+    [Unit]
+    Description=Caddy, HTTPS in front of the game server
+    After=docker.service heist-server.service
+
+    [Service]
+    ExecStartPre=-/usr/bin/docker rm -f caddy
+    ExecStart=/usr/bin/docker run --rm --name caddy --network heist -p 80:80 -p 443:443 --env-file /var/lib/heist/caddy.env -v /var/lib/heist/Caddyfile:/etc/caddy/Caddyfile:ro -v /var/lib/heist/caddy:/data caddy:2.11
+    ExecStop=/usr/bin/docker stop caddy
+    Restart=always
+    RestartSec=5
+
+runcmd:
+- mkdir -p /var/lib/heist/data /var/lib/heist/caddy /home/heist
+- chown 2000:2000 /var/lib/heist/data
+- curl -sf -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/attributes/caddyfile -o /var/lib/heist/Caddyfile
+- echo "HEIST_HOST=$(curl -sf -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/attributes/heist-host)" > /var/lib/heist/caddy.env
+- docker network inspect heist >/dev/null 2>&1 || docker network create heist
+- iptables -w -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+- systemctl daemon-reload
+- systemctl start heist-server.service caddy.service

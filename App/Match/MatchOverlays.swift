@@ -1,3 +1,4 @@
+import HeistCore
 import SwiftUI
 
 // Overlays on the match screens from the design: 3.18 leave match and 3.14 quick chat, plus the chat
@@ -43,7 +44,7 @@ struct LeaveOverlay: View {
                 .padding(.vertical, 10 * s)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 14 * s))
-                Text("Classic · Round \(model.roundNumber) of \(MatchRules.rounds) · Score \(model.score.you)–\(model.score.bot)")
+                Text("Tournament · Round \(model.roundNumber) · Score \(model.score.you)–\(model.score.bot)")
                     .font(BrandFont.nunito(12 * s, 800))
                     .foregroundStyle(Color(hex: 0xA9BEDD))
                 Button("Keep playing", action: onKeepPlaying)

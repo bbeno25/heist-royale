@@ -1,6 +1,7 @@
+import HeistCore
 import RealityKit
-import simd
 import UIKit
+import simd
 
 /// Meshes the board needs that RealityKit has no generator for, built from triangles.
 @MainActor

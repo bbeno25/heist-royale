@@ -12,6 +12,7 @@
 		091D480E0045ECBF0EF59504 /* HomeControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7027AD0341D515F6A0F48C5F /* HomeControls.swift */; };
 		119FDEE941A6AC72D356DED1 /* HomeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8B42FD953824D75101C53D /* HomeTheme.swift */; };
 		13C41125C057AB3028352C59 /* LineLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */; };
+		18D27B99344C0172C495436A /* MatchNotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C10F5237E8179239050D51 /* MatchNotes.swift */; };
 		1FA6544405A70683DB073EBC /* MatchScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FC0F945230890680D47D30 /* MatchScreens.swift */; };
 		39253CBF42EB593945BD584B /* Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF62DAEE396CFB0297F07F87 /* Brand.swift */; };
 		4514E5DC92B03C32AAF712A1 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D5BCA8761D90345554C50ED /* RootView.swift */; };
@@ -20,14 +21,16 @@
 		5468991A583618620C0FD646 /* MatchOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84F72F9243CB0C121AEFA933 /* MatchOverlays.swift */; };
 		57114217358FF239E6AF8925 /* Fredoka.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B69C6A0F01CEF2F1AC10A7C2 /* Fredoka.ttf */; };
 		6339F15BC2967678A41152D7 /* Fredoka-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 7D8E620E4EB93EE98F765F0B /* Fredoka-OFL.txt */; };
+		6ABAAAEF863A7A447BAB0D99 /* MatchLobby.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCEE4D2EDC170E5DD16FEB9D /* MatchLobby.swift */; };
 		6C6C1F336C70079FF6FC0C39 /* MatchCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391F1E492A58D2FA584D2E08 /* MatchCard.swift */; };
+		6DF55F77A69B722B04A2DD54 /* GuestToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = E36A820CE04ED0F47FBFEFD0 /* GuestToken.swift */; };
 		7030527ED3982BB8B02A65BF /* BoardMaterials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 242AE901EDC956E8DE53B440 /* BoardMaterials.swift */; };
 		70B596B4A13972700CAAEE12 /* ServerSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2DDDCD1FA447E0E1403D507 /* ServerSync.swift */; };
+		74EF5F1DD500D1F40D9AE1DF /* GameConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E0F092874687FBD42E4A16F /* GameConnection.swift */; };
 		767A372EC8492CD41A21BC4D /* HarborBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE1075D1A2B1CB980F02E1A /* HarborBoard.swift */; };
 		783636E985B1D8D19A427B55 /* Baloo2.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2F5035F93512A5C51321C527 /* Baloo2.ttf */; };
 		7C0C2A393BF3FE78EE3ADA58 /* BoardMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C3D8A40471EAACDD37A17A7 /* BoardMeshes.swift */; };
 		8280F1D2377AC209D1638014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ECE2966AAA2086B0247FAE99 /* Assets.xcassets */; };
-		8C6C5D1D01A3D25F019150C3 /* SampleRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476FA03D1CA73940BE443E04 /* SampleRound.swift */; };
 		8EC0CDCD83225FEFFE5CC480 /* MatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535045773BB08A0A975A4EF /* MatchView.swift */; };
 		99EFEE57DB2439025CAD980D /* SVGPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FE35DE0D9E4B2EFEE37BEC /* SVGPath.swift */; };
 		A3E620A9366B1C2AE084FE0E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09943C9D26FA4CF2FE92FCC /* HomeView.swift */; };
@@ -40,6 +43,7 @@
 		BBE5C8E60D87269AD042E6BC /* MatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593132A94540A1DFC8337A37 /* MatchModel.swift */; };
 		C1F7B1E8D5F9B6545ACBD966 /* DowntownBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = C083362C94F1A31F773F5C98 /* DowntownBackdrop.swift */; };
 		C4E933CDB3A7D5462ECF546F /* Baloo2-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 512C599DCBE0BC0ADF18C236 /* Baloo2-OFL.txt */; };
+		C9EBB79A4877BB8C4C0B5F78 /* ServerCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7977DDC8897C3C27CAF6EDE6 /* ServerCore */; };
 		CDF31B0B2D12EF41764706AA /* MatchBoardScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4B9311B991232D52508CA56 /* MatchBoardScene.swift */; };
 		DDD7E24D855669C4AA3B5F42 /* Wordmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8962F63C98B416452B8981 /* Wordmark.swift */; };
 		E2530C53AE4C87D710DEB77F /* Bungee-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 007508959678E025F77DF904 /* Bungee-Regular.ttf */; };
@@ -52,10 +56,12 @@
 /* Begin PBXFileReference section */
 		007508959678E025F77DF904 /* Bungee-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Bungee-Regular.ttf"; sourceTree = "<group>"; };
 		03FC0F945230890680D47D30 /* MatchScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreens.swift; sourceTree = "<group>"; };
+		05C10F5237E8179239050D51 /* MatchNotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchNotes.swift; sourceTree = "<group>"; };
 		079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineLogo.swift; sourceTree = "<group>"; };
 		242AE901EDC956E8DE53B440 /* BoardMaterials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMaterials.swift; sourceTree = "<group>"; };
 		24BE5C525184EB0A80B493FC /* NunitoSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = NunitoSans.ttf; sourceTree = "<group>"; };
 		2535045773BB08A0A975A4EF /* MatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchView.swift; sourceTree = "<group>"; };
+		2E0F092874687FBD42E4A16F /* GameConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameConnection.swift; sourceTree = "<group>"; };
 		2F29D5AF7FC48BFE346FF8FA /* Stage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stage.swift; sourceTree = "<group>"; };
 		2F5035F93512A5C51321C527 /* Baloo2.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Baloo2.ttf; sourceTree = "<group>"; };
 		391F1E492A58D2FA584D2E08 /* MatchCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchCard.swift; sourceTree = "<group>"; };
@@ -63,7 +69,6 @@
 		3B28D9C25403BABF3ECD5191 /* HeistRoyale.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HeistRoyale.entitlements; sourceTree = "<group>"; };
 		3C3D8A40471EAACDD37A17A7 /* BoardMeshes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMeshes.swift; sourceTree = "<group>"; };
 		410291BF181CF837EDAE1FC2 /* MatchPanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchPanels.swift; sourceTree = "<group>"; };
-		476FA03D1CA73940BE443E04 /* SampleRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleRound.swift; sourceTree = "<group>"; };
 		4B261C51196B7702E66D7D2F /* NunitoSans-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "NunitoSans-OFL.txt"; sourceTree = "<group>"; };
 		4DBCFC1C0D9A4B4DB5205989 /* BoardWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardWorld.swift; sourceTree = "<group>"; };
 		512C599DCBE0BC0ADF18C236 /* Baloo2-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Baloo2-OFL.txt"; sourceTree = "<group>"; };
@@ -89,10 +94,12 @@
 		DC2461C2C6E0193534156CAD /* MatchScreenParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreenParts.swift; sourceTree = "<group>"; };
 		DFEE96D52F53FA790898EBEB /* MatchRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchRules.swift; sourceTree = "<group>"; };
 		E2DDDCD1FA447E0E1403D507 /* ServerSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSync.swift; sourceTree = "<group>"; };
+		E36A820CE04ED0F47FBFEFD0 /* GuestToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestToken.swift; sourceTree = "<group>"; };
 		ECE2966AAA2086B0247FAE99 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EE220162BADE3ECBB1AB0B9E /* Bungee-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Bungee-OFL.txt"; sourceTree = "<group>"; };
 		EF62DAEE396CFB0297F07F87 /* Brand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Brand.swift; sourceTree = "<group>"; };
 		F42B3955088EE91B848D002A /* StackedLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StackedLogo.swift; sourceTree = "<group>"; };
+		FCEE4D2EDC170E5DD16FEB9D /* MatchLobby.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchLobby.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +108,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A7776E879AFECD351574ECD8 /* HeistCore in Frameworks */,
+				C9EBB79A4877BB8C4C0B5F78 /* ServerCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -184,6 +192,7 @@
 				B36F3BFEABD8DB1090F35BF3 /* Home */,
 				037A08538FEA2201746BC054 /* Launch */,
 				9E4D9FF524906ED7C923BDCF /* Match */,
+				ADBA8A1B50822F42AC490192 /* Online */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -194,17 +203,27 @@
 				ACE1075D1A2B1CB980F02E1A /* HarborBoard.swift */,
 				D4B9311B991232D52508CA56 /* MatchBoardScene.swift */,
 				391F1E492A58D2FA584D2E08 /* MatchCard.swift */,
+				FCEE4D2EDC170E5DD16FEB9D /* MatchLobby.swift */,
 				593132A94540A1DFC8337A37 /* MatchModel.swift */,
+				05C10F5237E8179239050D51 /* MatchNotes.swift */,
 				84F72F9243CB0C121AEFA933 /* MatchOverlays.swift */,
 				410291BF181CF837EDAE1FC2 /* MatchPanels.swift */,
 				DFEE96D52F53FA790898EBEB /* MatchRules.swift */,
 				DC2461C2C6E0193534156CAD /* MatchScreenParts.swift */,
 				03FC0F945230890680D47D30 /* MatchScreens.swift */,
 				2535045773BB08A0A975A4EF /* MatchView.swift */,
-				476FA03D1CA73940BE443E04 /* SampleRound.swift */,
 				304356F87249550E74B5F52B /* Board3D */,
 			);
 			path = Match;
+			sourceTree = "<group>";
+		};
+		ADBA8A1B50822F42AC490192 /* Online */ = {
+			isa = PBXGroup;
+			children = (
+				2E0F092874687FBD42E4A16F /* GameConnection.swift */,
+				E36A820CE04ED0F47FBFEFD0 /* GuestToken.swift */,
+			);
+			path = Online;
 			sourceTree = "<group>";
 		};
 		B36F3BFEABD8DB1090F35BF3 /* Home */ = {
@@ -254,6 +273,7 @@
 			name = HeistRoyale;
 			packageProductDependencies = (
 				AD37DB1A6E01625D74BFDACF /* HeistCore */,
+				7977DDC8897C3C27CAF6EDE6 /* ServerCore */,
 			);
 			productName = HeistRoyale;
 			productReference = 610687B682AAC6EC69E65A07 /* HeistRoyale.app */;
@@ -326,6 +346,8 @@
 				EA03E4C5C74964EC7692A98F /* BoardWorld.swift in Sources */,
 				39253CBF42EB593945BD584B /* Brand.swift in Sources */,
 				C1F7B1E8D5F9B6545ACBD966 /* DowntownBackdrop.swift in Sources */,
+				74EF5F1DD500D1F40D9AE1DF /* GameConnection.swift in Sources */,
+				6DF55F77A69B722B04A2DD54 /* GuestToken.swift in Sources */,
 				767A372EC8492CD41A21BC4D /* HarborBoard.swift in Sources */,
 				F64B070F0995523B43055428 /* HeistRoyaleApp.swift in Sources */,
 				091D480E0045ECBF0EF59504 /* HomeControls.swift in Sources */,
@@ -335,7 +357,9 @@
 				13C41125C057AB3028352C59 /* LineLogo.swift in Sources */,
 				CDF31B0B2D12EF41764706AA /* MatchBoardScene.swift in Sources */,
 				6C6C1F336C70079FF6FC0C39 /* MatchCard.swift in Sources */,
+				6ABAAAEF863A7A447BAB0D99 /* MatchLobby.swift in Sources */,
 				BBE5C8E60D87269AD042E6BC /* MatchModel.swift in Sources */,
+				18D27B99344C0172C495436A /* MatchNotes.swift in Sources */,
 				5468991A583618620C0FD646 /* MatchOverlays.swift in Sources */,
 				F035CF3A87EA127E4820C4D5 /* MatchPanels.swift in Sources */,
 				0842BF3CE3E901FAC71B1DFC /* MatchRules.swift in Sources */,
@@ -344,7 +368,6 @@
 				8EC0CDCD83225FEFFE5CC480 /* MatchView.swift in Sources */,
 				4514E5DC92B03C32AAF712A1 /* RootView.swift in Sources */,
 				99EFEE57DB2439025CAD980D /* SVGPath.swift in Sources */,
-				8C6C5D1D01A3D25F019150C3 /* SampleRound.swift in Sources */,
 				70B596B4A13972700CAAEE12 /* ServerSync.swift in Sources */,
 				AE1B3906CF0849FA90321719 /* SplashView.swift in Sources */,
 				EB12A3C3445C26784F5E0E90 /* StackedLogo.swift in Sources */,
@@ -564,6 +587,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		7977DDC8897C3C27CAF6EDE6 /* ServerCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ServerCore;
+		};
 		AD37DB1A6E01625D74BFDACF /* HeistCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = HeistCore;

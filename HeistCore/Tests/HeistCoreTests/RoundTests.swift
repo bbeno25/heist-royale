@@ -57,6 +57,10 @@ private func chase(_ map: GameMap, _ rules: RoundRules = rules()) -> Round {
     #expect(round.result?.reason == .escaped)
     #expect(round.result?.winner == .thief)
     #expect(round.result?.turns == 3)
+    let reveal = round.reveal()
+    #expect(reveal.thiefTrail == [Hex(q: 3, r: 0), Hex(q: 2, r: 0), Hex(q: 3, r: -1), Hex(q: 4, r: -2)])
+    #expect(reveal.policeTrail?.count == 4)
+    #expect(reveal.robbedAt == Sighting(tile: Hex(q: 2, r: 0), turn: 1))
 }
 
 @Test func lockdownSealsTheExits() {

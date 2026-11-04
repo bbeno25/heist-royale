@@ -20,9 +20,12 @@ extension ClientLink {
 }
 
 extension ServerEnvelope {
-    /// The JSON text that goes over the wire.
+    /// The JSON text that goes over the wire, stamped with the server's clock so the app can count down
+    /// to deadlines even when the phone's clock is off.
     public func json() -> String {
-        (try? String(decoding: JSONEncoder.wire.encode(self), as: UTF8.self)) ?? "{}"
+        var stamped = self
+        stamped.serverTime = wallClock()
+        return (try? String(decoding: JSONEncoder.wire.encode(stamped), as: UTF8.self)) ?? "{}"
     }
 }
 

@@ -1,3 +1,4 @@
+import HeistCore
 import SwiftUI
 
 /// The match: full-screen screens between rounds (coin flip, role reveal, round result, series, match end),
@@ -61,6 +62,7 @@ struct MatchView: View {
         case .roleReveal: RoleRevealScreen(model: model, stage: stage)
         case .roundResult: RoundResultScreen(model: model, stage: stage)
         case .series: SeriesScreen(model: model, stage: stage, onChat: openChat)
+        case .connecting, .searching, .failed: LobbyScreen(model: model, stage: stage)
         default: MatchEndScreen(model: model, stage: stage)
         }
     }
@@ -204,7 +206,7 @@ private struct MatchTopBar: View {
             return card == .blueprintScan ? "Aim your scan" : card.target == .none ? card.name : "Place \(card.name)"
         case .prepLocked: return "Locked in"
         case .intel: return "Intel reveal"
-        case .chase, .resolving: return "Turn \(model.round.turn) of \(MatchRules.chaseTurns)"
+        case .chase, .resolving: return "Turn \(model.view.turn) of \(model.view.turnLimit)"
         default: return ""
         }
     }

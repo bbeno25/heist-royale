@@ -217,13 +217,16 @@ public enum ServerMessage: Sendable, Equatable {
         /// Which seat plays thief in each round, rounds 1 to 8.
         public var thiefSchedule: [Seat]
         public var winTarget: Int
+        /// When round 1's role reveal starts; the coin flip shows until then.
+        public var firstRoundAt: Int64?
 
-        public init(youAre: Seat, you: PlayerCard, opponent: PlayerCard, thiefSchedule: [Seat], winTarget: Int) {
+        public init(youAre: Seat, you: PlayerCard, opponent: PlayerCard, thiefSchedule: [Seat], winTarget: Int, firstRoundAt: Int64? = nil) {
             self.youAre = youAre
             self.you = you
             self.opponent = opponent
             self.thiefSchedule = thiefSchedule
             self.winTarget = winTarget
+            self.firstRoundAt = firstRoundAt
         }
     }
 
@@ -438,7 +441,7 @@ public enum ServerMessage: Sendable, Equatable {
 // MARK: Envelopes
 
 private enum EnvelopeKey: String, CodingKey {
-    case seq, type, matchId, payload
+    case seq, type, matchId, serverTime, payload
 }
 
 private struct Empty: Codable {}
@@ -496,6 +499,8 @@ public struct ServerEnvelope: Codable, Sendable, Equatable {
     /// Numbered per player within a match (0 outside one), so a dropped app can tell what it missed.
     public var seq: Int
     public var matchId: String?
+    /// The server's clock when it sent this, in milliseconds since 1970.
+    public var serverTime: Int64?
     public var message: ServerMessage
 
     public init(_ message: ServerMessage, seq: Int = 0, matchId: String? = nil) {
@@ -508,6 +513,7 @@ public struct ServerEnvelope: Codable, Sendable, Equatable {
         let c = try decoder.container(keyedBy: EnvelopeKey.self)
         seq = try c.decodeIfPresent(Int.self, forKey: .seq) ?? 0
         matchId = try c.decodeIfPresent(String.self, forKey: .matchId)
+        serverTime = try c.decodeIfPresent(Int64.self, forKey: .serverTime)
         let type = try c.decode(String.self, forKey: .type)
         func payload<T: Decodable>(_: T.Type) throws -> T { try c.decode(T.self, forKey: .payload) }
         switch type {
@@ -537,6 +543,7 @@ public struct ServerEnvelope: Codable, Sendable, Equatable {
         var c = encoder.container(keyedBy: EnvelopeKey.self)
         try c.encode(seq, forKey: .seq)
         try c.encodeIfPresent(matchId, forKey: .matchId)
+        try c.encodeIfPresent(serverTime, forKey: .serverTime)
         try c.encode(message.type, forKey: .type)
         switch message {
         case .welcome(let p): try c.encode(p, forKey: .payload)

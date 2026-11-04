@@ -1,9 +1,10 @@
+import HeistCore
 import SwiftUI
 
 // The full-screen match screens from the design (3.01 coin flip, 3.02 role reveal, 3.15 round result,
 // 3.16 series scoreboard, 3.17 match end), laid out in the mockups' 393×852 points.
 
-private let seriesPill = "CLASSIC · BEST OF \(MatchRules.rounds) · RANKED"
+private let seriesPill = "TOURNAMENT · FIRST TO \(MatchRules.winsNeeded) · RANKED"
 
 // MARK: - 3.01 Coin flip
 
@@ -39,7 +40,7 @@ struct CoinFlipScreen: View {
                 HStack(spacing: 8 * s) {
                     playerChip(name: model.player.name, detail: "You · \(model.startRatings.combined)", role: firstRole, first: youFirst, bot: false)
                     Text("VS").font(BrandFont.baloo(20 * s, 800)).foregroundStyle(Color(hex: 0xC8BDE6))
-                    playerChip(name: model.opponent.name, detail: String(model.opponent.ratings.combined), role: firstRole.other, first: !youFirst, bot: true)
+                    playerChip(name: model.opponent.name, detail: String(model.opponent.ratings.combined), role: firstRole.other, first: !youFirst, bot: model.opponent.isBot)
                 }
                 .padding(.horizontal, 16 * s)
                 .padding(.top, 146 * s)
@@ -164,7 +165,7 @@ struct CoinFlipScreen: View {
                 }
             }
             Divider().overlay(.white.opacity(0.12))
-            Text("First to \(MatchRules.winsNeeded) round wins takes the match. \(MatchRules.rounds / 2)–\(MatchRules.rounds / 2) is a draw.")
+            Text("First to \(MatchRules.winsNeeded) round wins takes the match. At 3–3 after six rounds come two extra rounds: win both to take it, or it's a draw.")
                 .font(BrandFont.nunito(12.5 * s, 700))
                 .foregroundStyle(Color(hex: 0xDCD3F2))
         }
@@ -302,7 +303,7 @@ struct RoleRevealScreen: View {
         } content: {
             ZStack(alignment: .top) {
                 VStack(spacing: 4 * s) {
-                    ScreenPill(text: "ROUND \(model.roundNumber) OF \(MatchRules.rounds) · CLASSIC")
+                    ScreenPill(text: model.isExtension ? "EXTRA ROUND \(model.roundNumber - MatchRules.regularRounds) OF 2 · TOURNAMENT" : "ROUND \(model.roundNumber) · TOURNAMENT")
                     Text("YOU ARE THE")
                         .font(BrandFont.nunito(14 * s, 900))
                         .tracking(4.2 * s)
@@ -344,11 +345,11 @@ struct RoleRevealScreen: View {
                 HStack {
                     HStack(spacing: 6 * s) {
                         Text("vs \(model.opponent.name)").font(BrandFont.nunito(13 * s, 800))
-                        BotTag()
+                        if model.opponent.isBot { BotTag() }
                         RoleChip(role: role.other, height: 24)
                     }
                     Spacer()
-                    Text("Briefing in \(model.secondsLeft) s")
+                    Text("Briefing in \(max(1, model.secondsLeft - MatchRules.briefingSeconds)) s")
                         .font(BrandFont.nunito(13 * s, 800))
                         .foregroundStyle(Color(hex: 0xDCD3F2))
                 }
@@ -370,8 +371,8 @@ struct RoleRevealScreen: View {
         let s = stage.scale
         let thief = model.role == .thief
         let rows: [(icon: String, dim: Bool, text: String)] = thief
-            ? [("art-exit", false, "You can see the 3 exits."), ("art-chest", true, "The police can see the chests. You can't."), ("clock", false, "\(MatchRules.chaseTurns) turns, \(MatchRules.chaseTurnSeconds) seconds each.")]
-            : [("art-chest", false, "You can see the 3 chests."), ("art-exit", true, "The thief can see the exits. You can't."), ("clock", false, "\(MatchRules.chaseTurns) turns, \(MatchRules.chaseTurnSeconds) seconds each.")]
+            ? [("art-exit", false, "You can see the \(model.view.exits.count) exits."), ("art-chest", true, "The police can see the chests. You can't."), ("clock", false, "\(model.view.turnLimit) turns, \(MatchRules.chaseTurnSeconds) seconds each.")]
+            : [("art-chest", false, "You can see the \(model.view.chests.count) chests."), ("art-exit", true, "The thief can see the exits. You can't."), ("clock", false, "\(model.view.turnLimit) turns, \(MatchRules.chaseTurnSeconds) seconds each.")]
         return VStack(alignment: .leading, spacing: 6 * s) {
             Text("YOUR GOAL")
                 .font(BrandFont.nunito(11 * s, 900))
@@ -425,7 +426,7 @@ struct RoundResultScreen: View {
             } content: {
                 ZStack(alignment: .top) {
                     VStack(spacing: 4 * s) {
-                        ScreenPill(text: "ROUND \(record.number) OF \(MatchRules.rounds) · CLASSIC")
+                        ScreenPill(text: record.number > MatchRules.regularRounds ? "EXTRA ROUND \(record.number - MatchRules.regularRounds) OF 2 · TOURNAMENT" : "ROUND \(record.number) · TOURNAMENT")
                         HStack(spacing: 8 * s) {
                             SVGShape(record.role.emblem).fill(record.role.color).frame(width: 32 * s, height: 32 * s)
                             Text(record.headline)
@@ -521,9 +522,7 @@ struct RoundResultScreen: View {
         .accessibilityAction(named: "Continue") { model.skipAhead() }
     }
 
-    private var isFinal: Bool {
-        model.score.you >= MatchRules.winsNeeded || model.score.bot >= MatchRules.winsNeeded || model.roundNumber >= MatchRules.rounds
-    }
+    private var isFinal: Bool { model.isDecided }
 }
 
 /// The round played back on a small 3D board, both players visible, with a replay button.
@@ -660,7 +659,7 @@ struct SeriesStrip: View {
 
     private func pipStyle(_ number: Int, role: Role) -> PipStyle {
         let record = model.records.first { $0.number == number }
-        let decided = model.score.you >= MatchRules.winsNeeded || model.score.bot >= MatchRules.winsNeeded
+        let decided = model.isDecided
         if let record, record.won {
             return PipStyle(label: "Won", labelColor: Color(hex: 0xFFE3B0),
                             fill: AnyShapeStyle(RadialGradient(colors: [Color(hex: 0xFFF1A8), Color(hex: 0xF5B52E), Color(hex: 0xB9801A)], center: UnitPoint(x: 0.4, y: 0.35), startRadius: 0, endRadius: 20 * s)),
@@ -724,18 +723,18 @@ struct SeriesScreen: View {
                     .accessibilityElement()
                     .accessibilityLabel("Score: you \(model.score.you), \(model.opponent.name) \(model.score.bot)")
                     Spacer()
-                    player(name: model.opponent.name, role: nextRole.other, bot: true)
+                    player(name: model.opponent.name, role: nextRole.other, bot: model.opponent.isBot)
                 }
                 .padding(.horizontal, 16 * s)
                 .padding(.top, 96 * s)
 
                 VStack(spacing: 6 * s) {
-                    Text("First to \(MatchRules.winsNeeded) round wins · \(MatchRules.rounds / 2)–\(MatchRules.rounds / 2) is a draw")
+                    Text(model.roundNumber >= MatchRules.regularRounds ? "Extra rounds: win both to take the match" : "First to \(MatchRules.winsNeeded) round wins · 3–3 goes to two extra rounds")
                         .font(BrandFont.nunito(13 * s, 800))
                         .foregroundStyle(Color(hex: 0xD6E0F5))
                     HStack(spacing: 8 * s) {
-                        needs("You need \(MatchRules.winsNeeded - model.score.you) more", .thief)
-                        needs("\(model.opponent.name) needs \(MatchRules.winsNeeded - model.score.bot)", .police)
+                        needs(need(you: true), .thief)
+                        needs(need(you: false), .police)
                     }
                 }
                 .padding(.top, 196 * s)
@@ -765,9 +764,11 @@ struct SeriesScreen: View {
                     .buttonStyle(OutlineButtonStyle(scale: s))
                     .frame(width: 52 * s)
                     .accessibilityLabel("Quick chat")
-                    Button("Ready · Round \(next) in \(model.secondsLeft) s") { model.skipAhead() }
+                    // The server starts the next round for both players at once.
+                    Button("Round \(next) in \(model.secondsLeft) s") {}
                         .buttonStyle(ChunkyButtonStyle(colors: [Color(hex: 0xEE6A2A), Color(hex: 0xC23A16)], edge: Color(hex: 0x7E2410), text: .white, scale: s))
-                        .accessibilityLabel("Ready for round \(next). Starts automatically in \(model.secondsLeft) seconds")
+                        .allowsHitTesting(false)
+                        .accessibilityLabel("Round \(next) starts in \(model.secondsLeft) seconds")
                 }
                 .padding(.horizontal, 16 * s)
                 .padding(.top, 758 * s)
@@ -800,6 +801,20 @@ struct SeriesScreen: View {
             .overlay(RoundedRectangle(cornerRadius: 10 * s).strokeBorder(role.color, lineWidth: 1))
     }
 
+    /// What each side still needs: wins to reach 4, or in the extension both extra rounds.
+    private func need(you: Bool) -> String {
+        let name = you ? "You" : model.opponent.name
+        let verb = you ? "need" : "needs"
+        guard model.roundNumber >= MatchRules.regularRounds else {
+            let wins = MatchRules.winsNeeded - (you ? model.score.you : model.score.bot)
+            return "\(name) \(verb) \(wins) more"
+        }
+        guard let first = model.records.first(where: { $0.number > MatchRules.regularRounds }) else {
+            return "\(name) \(verb) both extra rounds"
+        }
+        return first.won == you ? "\(name) \(verb) round 8 too" : "\(name) can only draw now"
+    }
+
     private func row(_ number: Int, next: Int) -> some View {
         let s = stage.scale
         let record = model.records.first { $0.number == number }
@@ -809,7 +824,7 @@ struct SeriesScreen: View {
         } else if isNext {
             ("NEXT", "Up next · prep in \(model.secondsLeft) s")
         } else {
-            ("—", "If needed")
+            ("—", number > MatchRules.regularRounds ? "Only at 3–3" : "If needed")
         }
         let style: (row: Color, border: Color, chip: Color, chipBorder: Color, chipText: Color, text: Color) = switch result {
         case "WON": (Color(hex: 0x5BD07A, opacity: 0.1), Color(hex: 0x5BD07A, opacity: 0.35), Color(hex: 0x5BD07A), Color(hex: 0x5BD07A), Color(hex: 0x062A12), .white)
@@ -872,7 +887,7 @@ struct MatchEndScreen: View {
         } content: {
             ZStack(alignment: .top) {
                 VStack(spacing: 2 * s) {
-                    ScreenPill(text: "CLASSIC · RANKED")
+                    ScreenPill(text: "TOURNAMENT · RANKED")
                     Text(outcome == .win ? "VICTORY!" : outcome == .loss ? "DEFEAT" : "DRAW")
                         .font(BrandFont.baloo(58 * s, 800))
                         .foregroundStyle(outcome == .win ? Color(hex: 0xFFE15C) : outcome == .loss ? Color(hex: 0xC8D6F0) : Color(hex: 0xFFE3B0))
@@ -941,7 +956,7 @@ struct MatchEndScreen: View {
                         .frame(width: 110 * s)
                     Button("PLAY AGAIN") { model.playAgain() }
                         .buttonStyle(ChunkyButtonStyle(colors: [Color(hex: 0xEE6A2A), Color(hex: 0xC23A16)], edge: Color(hex: 0x7E2410), text: .white, scale: s))
-                        .accessibilityLabel("Play again: Classic, ranked")
+                        .accessibilityLabel("Play again: Tournament, ranked")
                 }
                 .padding(.horizontal, 16 * s)
                 .padding(.top, 748 * s)

@@ -173,20 +173,14 @@ struct BriefingPanel: View {
             }
             .transition(.scale(scale: 0.92).combined(with: .opacity))
 
-            Button("Ready") { model.skipAhead() }
-                .buttonStyle(ChunkyButtonStyle.gold(s))
-                .frame(width: 361 * s)
-                .offset(y: 264 * s)
-                .accessibilityHint("Starts prep now")
-
             Footnote(text: "Prep starts in \(model.secondsLeft) s. \(role == .thief ? "The police" : "The thief") is preparing too.", role: role)
         }
     }
 
     private var goal: String {
         model.role == .thief
-            ? "Rob one chest, then escape by boat through an exit. You know the exits; the chests are hidden. Fishing nets hide you, barrels block the way, and the two sea caves are a tunnel."
-            : "Catch the thief before turn \(MatchRules.chaseTurns) ends. You know the chests; the exits are hidden. Fishing nets hide the thief, barrels block the way, and the two sea caves are a tunnel."
+            ? "Rob one chest, then escape by boat through an exit. You know the exits; the chests are hidden. Fishing nets hide you, barrels and walls block the way, and the two sea caves are a tunnel."
+            : "Catch the thief before turn \(model.view.turnLimit) ends. You know the chests; the exits are hidden. Fishing nets hide the thief, barrels and walls block the way, and the two sea caves are a tunnel."
     }
 }
 
@@ -385,7 +379,7 @@ struct ChasePanel: View {
 
     var body: some View {
         let role = model.role
-        let round = model.round
+        let view = model.view
         ZStack(alignment: .topLeading) {
             InfoBox(role: role, accent: role == .thief ? Color(red: 1, green: 214 / 255, blue: 107 / 255, opacity: 0.6) : Color(red: 156 / 255, green: 198 / 255, blue: 1, opacity: 0.5)) {
                 HStack {
@@ -430,7 +424,7 @@ struct ChasePanel: View {
                 Button("Wait") { model.chooseWait() }
                     .buttonStyle(OutlineButtonStyle(scale: s, lit: model.move == .wait))
                     .frame(width: 92 * s)
-                    .accessibilityLabel("Wait on \(Harbor.name(round.position(of: role))) this turn")
+                    .accessibilityLabel("Wait on \(Harbor.name(view.position)) this turn")
 
                 Button(lockLabel) { model.lockMove() }
                     .buttonStyle(ChunkyButtonStyle.role(role, s))
@@ -441,8 +435,8 @@ struct ChasePanel: View {
             .offset(y: 264 * s)
             .disabled(model.phase != .chase)
 
-            let turnsLeft = max(0, MatchRules.chaseTurns - round.turn + 1)
-            Footnote(text: "\(turnsLeft) \(turnsLeft == 1 ? "turn" : "turns") left · You \(model.score.you) – \(model.score.bot) Bot", role: role)
+            let turnsLeft = max(0, view.turnLimit - view.turn + 1)
+            Footnote(text: "\(turnsLeft) \(turnsLeft == 1 ? "turn" : "turns") left · You \(model.score.you) – \(model.score.bot) \(model.opponent.name)", role: role)
         }
     }
 
@@ -466,8 +460,8 @@ struct ChasePanel: View {
     }
 
     private var moveText: String {
-        let here = Harbor.name(model.round.position(of: model.role))
-        if model.phase == .resolving { return "Moving…" }
+        let here = Harbor.name(model.view.position)
+        if model.phase == .resolving { return model.opponentLocked ? "Moving…" : "Waiting for the \(model.role.other.title.lowercased())…" }
         switch model.move {
         case .none: return "Pick a move"
         case .wait: return "Stay on \(here)"
@@ -486,34 +480,24 @@ struct ChasePanel: View {
     }
 
     private var hint: String {
-        let round = model.round
+        let view = model.view
         var parts: [String] = []
-        switch model.role {
-        case .thief:
-            if round.hasLoot { parts.append("You have the loot: reach an exit.") }
-            if round.thiefSeesPolice() {
-                parts.append("The police is on \(Harbor.name(round.police))!")
-            } else if let seen = round.thiefSawPolice {
-                parts.append("The police was last seen near \(Harbor.name(seen.tile)) \(ago(seen.turn)).")
-            } else {
-                parts.append("No sign of the police yet.")
-            }
-        case .police:
-            if let alarm = round.alarm { parts.append("Alarm: the chest on \(Harbor.name(alarm.tile)) was robbed \(ago(alarm.turn)).") }
-            if round.policeSeesThief() {
-                parts.append("The thief is on \(Harbor.name(round.thief))!")
-            } else if let seen = round.policeSawThief {
-                parts.append("The thief was last seen near \(Harbor.name(seen.tile)) \(ago(seen.turn)).")
-            } else {
-                parts.append("No sign of the thief yet.")
-            }
+        let other = model.role.other.title.lowercased()
+        if model.role == .thief, view.hasLoot { parts.append("You have the loot: reach an exit.") }
+        if model.role == .police, let alarm = view.alarm { parts.append("Alarm: the chest on \(Harbor.name(alarm.tile)) was robbed \(ago(alarm.turn)).") }
+        if let seen = view.opponent, view.opponentVisible {
+            parts.append("The \(other) is on \(Harbor.name(seen.tile))!")
+        } else if let seen = view.opponent {
+            parts.append("The \(other) was last seen near \(Harbor.name(seen.tile)) \(ago(seen.turn)).")
+        } else {
+            parts.append("No sign of the \(other) yet.")
         }
         if model.phase == .chase { parts.append("Glowing tiles are the moves you can make.") }
         return parts.joined(separator: " ")
     }
 
     private func ago(_ turn: Int) -> String {
-        let turns = model.round.turn - turn
+        let turns = model.view.turn - turn
         return turns <= 0 ? "this turn" : turns == 1 ? "1 turn ago" : "\(turns) turns ago"
     }
 

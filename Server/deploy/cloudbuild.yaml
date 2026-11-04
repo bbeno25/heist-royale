@@ -1,0 +1,17 @@
+# Builds Server/Dockerfile from the repo root and pushes the image to Artifact Registry.
+# Run by deploy.sh; tagged latest (what the VM runs) and with the build ID (to roll back to).
+steps:
+- name: gcr.io/cloud-builders/docker
+  args:
+  - build
+  - -f
+  - Server/Dockerfile
+  - -t
+  - us-central1-docker.pkg.dev/$PROJECT_ID/heist/heist-server:latest
+  - -t
+  - us-central1-docker.pkg.dev/$PROJECT_ID/heist/heist-server:$BUILD_ID
+  - .
+images:
+- us-central1-docker.pkg.dev/$PROJECT_ID/heist/heist-server:latest
+- us-central1-docker.pkg.dev/$PROJECT_ID/heist/heist-server:$BUILD_ID
+timeout: 1800s

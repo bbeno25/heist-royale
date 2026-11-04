@@ -3,13 +3,17 @@ import HeistCore
 /// Every timer and tuning number the server uses. Starting values from the Master Plan; live config
 /// will replace these later (task 2.9).
 public struct ServerConfig: Sendable {
-    // Match phases
+    // Match phases. The app shows a screen in each pause: the coin flip before round 1, the role reveal
+    // before each briefing, and the round result and series score between rounds.
     public var readyCheck: Duration = .seconds(10)
+    public var coinFlip: Duration = .seconds(5)
+    public var roleReveal: Duration = .seconds(3)
     public var briefing: Duration = .seconds(5)
     public var prep: Duration = .seconds(40)
     public var intel: Duration = .seconds(5)
     public var turn: Duration = .seconds(15)
     public var roundResult: Duration = .seconds(8)
+    public var seriesBreak: Duration = .seconds(6)
     /// How long a dropped player has to come back before forfeiting; a bot plays for them meanwhile.
     public var disconnectGrace: Duration = .seconds(60)
     /// Chase timeouts in a row before a bot plays the rest of the round for that player.
@@ -40,7 +44,7 @@ public struct ServerConfig: Sendable {
     /// The same rules with every timer multiplied by `factor`, for tests.
     public func scaled(_ factor: Double) -> ServerConfig {
         var config = self
-        for path in [\ServerConfig.readyCheck, \.briefing, \.prep, \.intel, \.turn, \.roundResult, \.disconnectGrace,
+        for path in [\ServerConfig.readyCheck, \.coinFlip, \.roleReveal, \.briefing, \.prep, \.intel, \.turn, \.roundResult, \.seriesBreak, \.disconnectGrace,
                      \.botFill, \.queueStatusEvery, \.matchmakingTick] {
             config[keyPath: path] = self[keyPath: path] * factor
         }

@@ -1,3 +1,4 @@
+import HeistCore
 import SwiftUI
 
 // The home screen's controls, sized in design points times the stage scale.
@@ -351,9 +352,9 @@ struct ModeSelector: View {
                 }
                 .frame(width: 38 * s, height: 38 * s)
                 VStack(alignment: .leading, spacing: 1 * s) {
-                    Text("Classic match")
+                    Text("Tournament")
                         .font(BrandFont.nunito(15 * s, 900))
-                    Text("Best of 8 · First to 5 · Ranked")
+                    Text("3 + 3 rounds · First to 4 · Ranked")
                         .font(BrandFont.nunito(11 * s, 700))
                         .foregroundStyle(skin.sub)
                         .lineLimit(1)
@@ -374,7 +375,7 @@ struct ModeSelector: View {
             .overlay(Capsule().strokeBorder(skin.panelBorder, lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Mode: Classic match, best of 8, first to 5 round wins, ranked. Change mode")
+        .accessibilityLabel("Mode: Tournament, three rounds in each role, first to 4 round wins, ranked. Change mode")
     }
 }
 

@@ -1,3 +1,4 @@
+import HeistCore
 import SwiftUI
 
 // Pieces shared by the full-screen match screens (coin flip, role reveal, round result, series, match end),
@@ -20,7 +21,7 @@ struct StageScreen<Background: View, Content: View>: View {
     }
 }
 
-/// The small rounded label at the top of a screen, such as "CLASSIC · BEST OF 8 · RANKED".
+/// The small rounded label at the top of a screen, such as "TOURNAMENT · FIRST TO 4 · RANKED".
 struct ScreenPill: View {
     let text: String
 

@@ -206,6 +206,8 @@ public struct Round: Sendable {
     public private(set) var lockdownThrough = 0
     public private(set) var camerasOffThrough = 0
     public private(set) var result: RoundResult?
+    /// Where each side stood at the start and after every turn, for the replay.
+    public private(set) var trails = RolePair<[Hex]>(repeating: [])
 
     // What each side knows
     private var thiefKnownChests: Set<Hex> = []
@@ -235,6 +237,7 @@ public struct Round: Sendable {
             prepHands[role] = Dealer.prepHand(for: role, from: rules.cards, random: &random)
             cards[role] = Dealer.chaseCard(for: role, from: rules.cards, random: &random).map { [$0] } ?? []
         }
+        trails = RolePair(thief: [thief], police: [police])
         for _ in 0..<rules.startingBoxes {
             let spots = map.board.cells.filter {
                 isFree($0) && !boxes.contains($0) && $0.distance(to: thief) >= 2 && $0.distance(to: police) >= 2
@@ -504,6 +507,7 @@ public struct Round: Sendable {
             finish(.time, at: nil)
             return notes
         }
+        recordTrails()
         spawnBox()
         turn += 1
         return notes
@@ -512,6 +516,12 @@ public struct Round: Sendable {
     private mutating func finish(_ reason: RoundResult.Reason, at tile: Hex?) {
         result = RoundResult(reason: reason, tile: tile, turns: turn)
         stage = .over
+        recordTrails()
+    }
+
+    private mutating func recordTrails() {
+        trails.thief.append(thief)
+        trails.police.append(police)
     }
 
     private mutating func stepEffects(_ notes: inout RolePair<[Note]>) {
@@ -682,7 +692,8 @@ public struct Round: Sendable {
     /// The whole board, shown to both players once the round is over.
     public func reveal() -> RoundReveal {
         RoundReveal(
-            map: map, thief: thief, police: police, robbed: robbed.sorted(),
+            map: map, thief: thief, police: police, robbed: robbed.sorted(), robbedAt: alarm,
+            thiefTrail: trails.thief, policeTrail: trails.police,
             cameras: cameras.sorted(), dummyCameras: dummyCameras.sorted(), motionDetectors: detectors.sorted(),
             reinforced: reinforced.sorted(), plantedBushes: plantedBushes.sorted(), lookouts: lookouts.sorted(),
             smokeCaches: smokeCaches.sorted()
@@ -713,6 +724,11 @@ public struct RoundReveal: Codable, Sendable, Equatable {
     public var thief: Hex
     public var police: Hex
     public var robbed: [Hex]
+    /// Where and on which turn the chest was robbed.
+    public var robbedAt: Sighting?
+    /// Where each side stood at the start and after every turn (absent from older servers).
+    public var thiefTrail: [Hex]?
+    public var policeTrail: [Hex]?
     public var cameras: [Hex]
     public var dummyCameras: [Hex]
     public var motionDetectors: [Hex]

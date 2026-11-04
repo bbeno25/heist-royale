@@ -17,7 +17,7 @@ typealias RatingUpdate = SeatPair<(before: Ratings, after: Ratings)>
 /// view. Bots, takeovers and dropped players are played by the HeistCore bot from that player's view.
 actor MatchRoom {
     enum Phase: String {
-        case ready, briefing, prep, intel, chase, roundEnd, over
+        case ready, coinFlip, briefing, prep, intel, chase, roundEnd, over
     }
 
     private enum TimerAction {
@@ -172,13 +172,15 @@ actor MatchRoom {
         startIfReady()
     }
 
+    /// Both are ready: the coin flip shows while the first round waits.
     private func startIfReady() {
         guard phase == .ready, seats.a.ready, seats.b.ready else { return }
+        phase = .coinFlip
+        schedule(config.coinFlip, .nextRound)
         for seat in Seat.allCases {
             send(.seriesStart(.init(youAre: seat, you: seats[seat].player, opponent: seats[seat.other].player,
-                                    thiefSchedule: Tournament.thiefSchedule, winTarget: Tournament.winTarget)), to: seat)
+                                    thiefSchedule: Tournament.thiefSchedule, winTarget: Tournament.winTarget, firstRoundAt: deadline)), to: seat)
         }
-        beginRound()
     }
 
     /// Someone didn't confirm in time: the match is off, and whoever did confirm goes back in the queue.
@@ -209,8 +211,9 @@ actor MatchRoom {
         prepPlays = .init(repeating: nil)
         plans = .init(repeating: nil)
         record.rounds.append(.init(seed: String(roundSeed, radix: 16), thief: Tournament.thief(inRound: roundNumber)))
+        // The briefing's deadline includes the role reveal the app shows first.
         phase = .briefing
-        schedule(config.briefing, .beginPrep)
+        schedule(config.roleReveal + config.briefing, .beginPrep)
         for seat in Seat.allCases {
             let role = role(of: seat)
             send(.roundBriefing(.init(round: roundNumber, role: role, view: round.view(for: role), score: series.score, deadline: deadline ?? 0)), to: seat)
@@ -335,7 +338,7 @@ actor MatchRoom {
         series.record(winner: winner)
         let over = series.outcome != nil
         phase = .roundEnd
-        if !over { schedule(config.roundResult, .nextRound) }
+        if !over { schedule(config.roundResult + config.seriesBreak, .nextRound) }
         for seat in Seat.allCases {
             send(.roundEnd(.init(round: roundNumber, result: result, winner: winner, youWon: winner == seat, score: series.score,
                                  reveal: round.reveal(), nextRoundAt: over ? nil : deadline)), to: seat)
