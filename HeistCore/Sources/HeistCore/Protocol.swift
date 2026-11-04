@@ -44,6 +44,94 @@ public struct Ratings: Codable, Sendable, Equatable {
             if role == .thief { thief = newValue } else { police = newValue }
         }
     }
+
+    public subscript(board: LeaderboardBoard) -> Rating {
+        switch board {
+        case .overall: overall
+        case .thief: thief
+        case .police: police
+        }
+    }
+}
+
+/// A player's match record, kept by the server and updated at the end of every rated match.
+public struct PlayerStats: Codable, Sendable, Equatable {
+    public var wins = 0
+    public var losses = 0
+    public var draws = 0
+    /// Matches this player left or didn't come back to in time (counted in `losses` too).
+    public var forfeits = 0
+    public var thiefRounds = 0
+    /// Rounds won as thief: every one is an escape.
+    public var escapes = 0
+    /// Chase turns of all those escapes added up, for the average escape turn.
+    public var escapeTurns = 0
+    public var policeRounds = 0
+    /// Rounds won as police, by a catch or by running out the turns.
+    public var policeWins = 0
+    public var catches = 0
+
+    public init() {}
+
+    public var matches: Int { wins + losses + draws }
+
+    public subscript(roundsAs role: Role) -> Int { role == .thief ? thiefRounds : policeRounds }
+
+    public subscript(roundsWonAs role: Role) -> Int { role == .thief ? escapes : policeWins }
+}
+
+extension PlayerStats {
+    /// Missing fields read as 0, so records saved before a field existed still load.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func count(_ key: CodingKeys) throws -> Int { try c.decodeIfPresent(Int.self, forKey: key) ?? 0 }
+        wins = try count(.wins)
+        losses = try count(.losses)
+        draws = try count(.draws)
+        forfeits = try count(.forfeits)
+        thiefRounds = try count(.thiefRounds)
+        escapes = try count(.escapes)
+        escapeTurns = try count(.escapeTurns)
+        policeRounds = try count(.policeRounds)
+        policeWins = try count(.policeWins)
+        catches = try count(.catches)
+    }
+}
+
+/// The leaderboards: one per rating. Matchmaking ignores ratings; they only rank players here.
+public enum LeaderboardBoard: String, Codable, Sendable, CaseIterable {
+    case overall, thief, police
+}
+
+public enum LeaderboardScope: String, Codable, Sendable, CaseIterable {
+    case global, country
+}
+
+public struct LeaderboardEntry: Codable, Sendable, Equatable {
+    /// 1 is the top. Players with the same (rounded) rating share a rank.
+    public var rank: Int
+    public var playerId: String
+    public var name: String
+    public var rating: Int
+    /// Games behind that rating: matches for overall, rounds for thief and police.
+    public var games: Int
+    /// ISO 3166 region code, such as "TR", when the app sent one.
+    public var country: String?
+
+    public init(rank: Int, playerId: String, name: String, rating: Int, games: Int, country: String?) {
+        self.rank = rank
+        self.playerId = playerId
+        self.name = name
+        self.rating = rating
+        self.games = games
+        self.country = country
+    }
+}
+
+/// Region codes are two capital letters; anything else is dropped.
+public func cleanRegion(_ code: String?) -> String? {
+    guard let code = code?.uppercased(), code.count == 2, code.allSatisfy({ ("A"..."Z").contains($0) }) else { return nil }
+    return code
 }
 
 /// How a player is shown to their opponent.
@@ -79,16 +167,34 @@ public enum ClientMessage: Sendable, Equatable {
     case resync
     case matchLeave
     case emote(Emote)
+    /// A leaderboard page; works before `hello` too (then the answer has no `you`).
+    case leaderboardGet(LeaderboardGet)
 
     public struct Hello: Codable, Sendable, Equatable {
         public var token: String?
         public var name: String
         public var protocolVersion: Int
+        /// The phone's region (ISO 3166, such as "TR"), for the country leaderboards.
+        public var region: String?
 
-        public init(token: String?, name: String, protocolVersion: Int = WireProtocol.version) {
+        public init(token: String?, name: String, protocolVersion: Int = WireProtocol.version, region: String? = nil) {
             self.token = token
             self.name = name
             self.protocolVersion = protocolVersion
+            self.region = region
+        }
+    }
+
+    public struct LeaderboardGet: Codable, Sendable, Equatable {
+        public var board: LeaderboardBoard
+        public var scope: LeaderboardScope
+        /// For the country scope; the signed-in player's own country when nil.
+        public var country: String?
+
+        public init(board: LeaderboardBoard, scope: LeaderboardScope = .global, country: String? = nil) {
+            self.board = board
+            self.scope = scope
+            self.country = country
         }
     }
 
@@ -138,6 +244,7 @@ public enum ClientMessage: Sendable, Equatable {
         case .resync: "match.resync"
         case .matchLeave: "match.leave"
         case .emote: "emote"
+        case .leaderboardGet: "leaderboard.get"
         }
     }
 }
@@ -169,6 +276,7 @@ public enum ServerMessage: Sendable, Equatable {
     case matchState(MatchState)
     case matchCancelled(MatchCancelled)
     case emote(Emote)
+    case leaderboard(Leaderboard)
     case error(ServerError)
 
     public struct Welcome: Codable, Sendable, Equatable {
@@ -178,12 +286,40 @@ public enum ServerMessage: Sendable, Equatable {
         public var protocolVersion: Int
         /// Set when the player is still in a running match; the app should resync.
         public var matchId: String?
+        /// This player's match record (only ever sent to the player themself).
+        public var stats: PlayerStats?
+        /// The region the server ranks this player under on the country boards.
+        public var country: String?
 
-        public init(player: PlayerCard, token: String, protocolVersion: Int, matchId: String?) {
+        public init(player: PlayerCard, token: String, protocolVersion: Int, matchId: String?, stats: PlayerStats? = nil, country: String? = nil) {
             self.player = player
             self.token = token
             self.protocolVersion = protocolVersion
             self.matchId = matchId
+            self.stats = stats
+            self.country = country
+        }
+    }
+
+    /// The top of one leaderboard, plus the asking player's own place.
+    public struct Leaderboard: Codable, Sendable, Equatable {
+        public var board: LeaderboardBoard
+        public var scope: LeaderboardScope
+        /// The country shown, for the country scope.
+        public var country: String?
+        public var entries: [LeaderboardEntry]
+        /// The asking player's row, also when it is below the top; nil before their first rated game.
+        public var you: LeaderboardEntry?
+        /// Everyone ranked on this board.
+        public var players: Int
+
+        public init(board: LeaderboardBoard, scope: LeaderboardScope, country: String?, entries: [LeaderboardEntry], you: LeaderboardEntry?, players: Int) {
+            self.board = board
+            self.scope = scope
+            self.country = country
+            self.entries = entries
+            self.you = you
+            self.players = players
         }
     }
 
@@ -433,6 +569,7 @@ public enum ServerMessage: Sendable, Equatable {
         case .matchState: "match.state"
         case .matchCancelled: "match.cancelled"
         case .emote: "emote"
+        case .leaderboard: "leaderboard"
         case .error: "error"
         }
     }
@@ -473,6 +610,7 @@ public struct ClientEnvelope: Codable, Sendable, Equatable {
         case "match.resync": message = .resync
         case "match.leave": message = .matchLeave
         case "emote": message = .emote(try c.decode(Emote.self, forKey: .payload))
+        case "leaderboard.get": message = .leaderboardGet(try c.decode(ClientMessage.LeaderboardGet.self, forKey: .payload))
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: c, debugDescription: "Unknown message type \(type)")
         }
@@ -490,6 +628,7 @@ public struct ClientEnvelope: Codable, Sendable, Equatable {
         case .infoUse(let p): try c.encode(p, forKey: .payload)
         case .turnSubmit(let p): try c.encode(p, forKey: .payload)
         case .emote(let p): try c.encode(p, forKey: .payload)
+        case .leaderboardGet(let p): try c.encode(p, forKey: .payload)
         case .queueLeave, .matchReady, .resync, .matchLeave: try c.encode(Empty(), forKey: .payload)
         }
     }
@@ -533,6 +672,7 @@ public struct ServerEnvelope: Codable, Sendable, Equatable {
         case "match.state": message = .matchState(try payload(ServerMessage.MatchState.self))
         case "match.cancelled": message = .matchCancelled(try payload(ServerMessage.MatchCancelled.self))
         case "emote": message = .emote(try payload(Emote.self))
+        case "leaderboard": message = .leaderboard(try payload(ServerMessage.Leaderboard.self))
         case "error": message = .error(try payload(ServerMessage.ServerError.self))
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: c, debugDescription: "Unknown message type \(type)")
@@ -562,6 +702,7 @@ public struct ServerEnvelope: Codable, Sendable, Equatable {
         case .matchState(let p): try c.encode(p, forKey: .payload)
         case .matchCancelled(let p): try c.encode(p, forKey: .payload)
         case .emote(let p): try c.encode(p, forKey: .payload)
+        case .leaderboard(let p): try c.encode(p, forKey: .payload)
         case .error(let p): try c.encode(p, forKey: .payload)
         }
     }

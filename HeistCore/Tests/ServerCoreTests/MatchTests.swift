@@ -90,6 +90,12 @@ private func play(on server: GameServer, link: TestLink, name: String, token: St
     #expect(ada.ratings == result.ratingsAfter)
     #expect(ada.ratings.thief.games + ada.ratings.police.games == player.rounds.count)
     if !result.draw { #expect(ada.ratings.overall.value != 1000) }
+    // The match and every round are in the player's stats.
+    #expect(ada.stats.matches == 1)
+    #expect(ada.stats.wins == (result.youWon ? 1 : 0) && ada.stats.draws == (result.draw ? 1 : 0))
+    #expect(ada.stats.thiefRounds == ada.ratings.thief.games && ada.stats.policeRounds == ada.ratings.police.games)
+    #expect(ada.stats.escapes + ada.stats.policeWins == player.rounds.filter(\.youWon).count)
+    #expect(ada.lastPlayed != nil)
     let bots = await store.bots()
     #expect(bots.contains { $0.matches == 1 })
     #expect(await server.activeMatches == 0)

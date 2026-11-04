@@ -2,14 +2,16 @@ import SwiftUI
 
 /// The home screen: the player's thief and police on stage in front of downtown, with the logo on
 /// top, menu buttons down both sides and PLAY at the bottom. Downtown follows the device clock
-/// (morning, evening or night). Only PLAY does something so far: it starts a sample match.
+/// (morning, evening or night). PLAY starts an online match and the Leaderboards tile opens the boards;
+/// the other buttons come later.
 struct HomeView: View {
     var player = PlayerSummary.sample
     var onPlay: () -> Void = {}
+    var onLeaderboards: () -> Void = {}
 
     var body: some View {
         TimelineView(.everyMinute) { timeline in
-            HomeScene(time: TimeOfDay(date: timeline.date), player: player, onPlay: onPlay)
+            HomeScene(time: TimeOfDay(date: timeline.date), player: player, onPlay: onPlay, onLeaderboards: onLeaderboards)
         }
     }
 }
@@ -18,6 +20,7 @@ private struct HomeScene: View {
     let time: TimeOfDay
     let player: PlayerSummary
     let onPlay: () -> Void
+    let onLeaderboards: () -> Void
 
     private static let design = CGSize(width: 393, height: 852)
 
@@ -28,7 +31,7 @@ private struct HomeScene: View {
                 DowntownBackdrop(time: time, placement: stage.backdrop(screen: geometry.size, anchorY: 556))
                     .id(time)
                     .transition(.opacity)
-                HomeStage(skin: HomeSkin(time), player: player, onPlay: onPlay)
+                HomeStage(skin: HomeSkin(time), player: player, onPlay: onPlay, onLeaderboards: onLeaderboards)
                     .environment(\.stageScale, stage.scale)
                     .frame(width: stage.size.width, height: stage.size.height, alignment: .topLeading)
                     .offset(x: stage.origin.x, y: stage.origin.y)
@@ -44,6 +47,7 @@ private struct HomeStage: View {
     let skin: HomeSkin
     let player: PlayerSummary
     let onPlay: () -> Void
+    let onLeaderboards: () -> Void
 
     @Environment(\.stageScale) private var scale
 
@@ -85,7 +89,9 @@ private struct HomeStage: View {
             .offset(y: 122 * s)
 
             VStack(spacing: 6 * s) {
-                ForEach(SideTile.Kind.left) { SideTile(kind: $0, player: player, skin: skin) }
+                ForEach(SideTile.Kind.left) { kind in
+                    SideTile(kind: kind, player: player, skin: skin, action: kind == .ranks ? onLeaderboards : {})
+                }
             }
             .offset(x: 6 * s, y: 174 * s)
             VStack(spacing: 6 * s) {
@@ -159,8 +165,9 @@ private struct Pedestals: View {
     }
 }
 
-/// What the home screen shows about the player. Sample values from the design until accounts and
-/// the server exist.
+/// What the home screen shows about the player. Name and ratings come from the saved account
+/// (`PlayerAccount.summary`); level, coins, season and pass are the design's sample values until the
+/// economy exists.
 struct PlayerSummary {
     struct Rank {
         let rating: Int

@@ -17,7 +17,7 @@ public actor GameServer {
     public init(config: ServerConfig = .standard, store: PlayerStore) {
         self.config = config
         self.store = store
-        matchmaker = Matchmaker(window: config.ratingWindow, windowPerSecond: config.ratingWindowPerSecond, botFill: config.botFill)
+        matchmaker = Matchmaker(botFill: config.botFill)
     }
 
     /// Starts the matchmaking loop.
@@ -59,8 +59,14 @@ public actor GameServer {
         } catch {
             return link.sendError("bad_message", "That message couldn't be read.")
         }
-        if case .hello(let hello) = envelope.message {
+        switch envelope.message {
+        case .hello(let hello):
             return await signIn(hello, link: link)
+        case .leaderboardGet(let request):
+            // Leaderboards are public: they work before hello too, just without the player's own row.
+            return await sendLeaderboard(request, to: link)
+        default:
+            break
         }
         guard let player = signedIn[link.linkID] else {
             return link.sendError("hello_first", "Send hello first.")
@@ -68,8 +74,8 @@ public actor GameServer {
         switch envelope.message {
         case .queueJoin:
             guard inMatch[player] == nil else { return link.sendError("in_match", "You are already in a match.") }
-            guard let record = await store.player(player) else { return }
-            matchmaker.join(player, rating: record.ratings.overall.value, at: .now)
+            guard await store.player(player) != nil else { return }
+            matchmaker.join(player, at: .now)
             link.send(.queueStatus(.init(waitedSeconds: 0, botAfterSeconds: Int(config.botFill.seconds.rounded()))))
         case .queueLeave:
             matchmaker.leave(player)
@@ -88,7 +94,7 @@ public actor GameServer {
         }
         let player: PlayerRecord
         do {
-            player = try await store.signIn(token: hello.token, name: hello.name)
+            player = try await store.signIn(token: hello.token, name: hello.name, region: hello.region)
         } catch {
             return link.sendError("server_error", "Couldn't sign in. Try again.")
         }
@@ -104,7 +110,8 @@ public actor GameServer {
         signedIn[link.linkID] = player.id
         links[player.id] = link
         let match = inMatch[player.id]
-        link.send(.welcome(.init(player: player.card, token: player.token ?? "", protocolVersion: WireProtocol.version, matchId: match?.matchID)))
+        link.send(.welcome(.init(player: player.card, token: player.token ?? "", protocolVersion: WireProtocol.version, matchId: match?.matchID,
+                                 stats: player.stats, country: player.country)))
         if let match, let room = rooms[match.matchID] {
             await room.attach(match.seat, link: link)
         }
@@ -170,9 +177,23 @@ public actor GameServer {
         for player in [seats.a.player.id, seats.b.player.id] where inMatch[player]?.matchID == matchID {
             inMatch[player] = nil
         }
-        for player in requeue {
-            guard let rating = await store.player(player)?.ratings.overall.value, links[player] != nil else { continue }
-            matchmaker.join(player, rating: rating, at: .now)
+        for player in requeue where links[player] != nil {
+            matchmaker.join(player, at: .now)
         }
+    }
+
+    // MARK: Leaderboards
+
+    private func sendLeaderboard(_ request: ClientMessage.LeaderboardGet, to link: ClientLink) async {
+        let you = signedIn[link.linkID]
+        var country: String?
+        if request.scope == .country {
+            country = cleanRegion(request.country)
+            if country == nil, let you { country = await store.player(you)?.country }
+            guard country != nil else {
+                return link.sendError("no_country", "Pick a country to see its leaderboard.")
+            }
+        }
+        link.send(.leaderboard(await store.leaderboard(request.board, country: country, limit: config.leaderboardSize, you: you)))
     }
 }

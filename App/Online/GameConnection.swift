@@ -31,8 +31,8 @@ final class GameConnection {
         self.target = target
     }
 
-    /// Connects and signs in.
-    func open(_ hello: ClientMessage.Hello) {
+    /// Connects and signs in; without `hello` it only connects (enough for the leaderboards).
+    func open(_ hello: ClientMessage.Hello?) {
         close()
         switch target {
         case .remote(let url):
@@ -73,7 +73,7 @@ final class GameConnection {
                 }
             }
         }
-        send(.hello(hello))
+        if let hello { send(.hello(hello)) }
     }
 
     func send(_ message: ClientMessage) {

@@ -468,7 +468,7 @@ struct RoundResultScreen: View {
 
     private func ratingRow(_ record: RoundRecord) -> some View {
         let s = stage.scale
-        let rank = record.role == .thief ? model.player.thief : model.player.police
+        let rank = RankLadder.rank(for: record.ratingAfter, role: record.role)
         return HStack(spacing: 10 * s) {
             RankBadge(role: record.role, division: rank.division, size: 40 * s)
             VStack(alignment: .leading, spacing: 1 * s) {
@@ -977,7 +977,7 @@ struct MatchEndScreen: View {
 
     private func ratingRow(role: Role) -> some View {
         let s = stage.scale
-        let rank = role == .thief ? model.player.thief : model.player.police
+        let rank = RankLadder.rank(for: model.ratings[role], role: role)
         let rounds = model.records.filter { $0.role == role }.count
         let before = model.startRatings[role], after = model.ratings[role]
         return HStack(spacing: 10 * s) {
@@ -1016,7 +1016,7 @@ struct MatchEndScreen: View {
                     .font(BrandFont.nunito(10 * s, 900))
                     .tracking(1.2 * s)
                     .foregroundStyle(Color(hex: 0xFFE15C))
-                Text("Used for matchmaking")
+                Text("Ranks you on the leaderboards")
                     .font(BrandFont.nunito(12.5 * s, 700))
                     .foregroundStyle(Color(hex: 0xFFF1D6))
             }

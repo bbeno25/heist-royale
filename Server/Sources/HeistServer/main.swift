@@ -1,4 +1,5 @@
-// The Heist Royale game server: GET /health answers "ok", and the app plays over one WebSocket at /ws.
+// The Heist Royale game server: GET /health answers "ok", the app plays over one WebSocket at /ws, and
+// GET /leaderboard?board=overall|thief|police[&country=TR] returns a leaderboard as JSON.
 //
 // Settings come from the environment:
 //   PORT (8080), HOST (0.0.0.0), DATA_DIR (./data: players.json and matches/),
@@ -44,6 +45,15 @@ await server.start()
 
 let router = Router()
 router.get("health") { _, _ in "ok" }
+router.get("leaderboard") { request, _ -> Response in
+    let query = request.uri.queryParameters
+    guard let board = LeaderboardBoard(rawValue: String(query["board"] ?? "overall")) else {
+        return Response(status: .badRequest, body: .init(byteBuffer: ByteBuffer(string: "board is overall, thief or police\n")))
+    }
+    let page = await store.leaderboard(board, country: query["country"].map(String.init), limit: config.leaderboardSize)
+    let json = try JSONEncoder.wire.encode(page)
+    return Response(status: .ok, headers: [.contentType: "application/json"], body: .init(byteBuffer: ByteBuffer(bytes: json)))
+}
 
 let webSocketRouter = Router(context: BasicWebSocketRequestContext.self)
 webSocketRouter.ws("ws") { inbound, outbound, _ in

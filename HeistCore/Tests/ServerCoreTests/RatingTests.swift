@@ -40,33 +40,37 @@ private let fresh = SeatPair(a: Ratings.starting(at: 1000), b: Ratings.starting(
     #expect(1000 - after.a.thief.value > 16)
 }
 
-@Test func closeRatingsPairAtOnce() {
-    var queue = Matchmaker(window: 300, windowPerSecond: 100, botFill: .seconds(10))
+@Test func playersMeetFirstComeWhateverTheirRatings() {
+    var queue = Matchmaker(botFill: .seconds(10))
     let start = ContinuousClock.now
-    queue.join("a", rating: 1000, at: start)
-    queue.join("b", rating: 1200, at: start)
-    #expect(queue.pairings(at: start) == [.players("a", "b")])
+    queue.join("a", at: start)
+    queue.join("b", at: start + .seconds(1))
+    queue.join("c", at: start + .seconds(2))
+    // a and b waited longest; ratings play no part, so nothing about them is even asked.
+    #expect(queue.pairings(at: start + .seconds(2)) == [.players("a", "b")])
+    #expect(queue.waiting.map(\.id) == ["c"])
+    queue.join("d", at: start + .seconds(3))
+    #expect(queue.pairings(at: start + .seconds(3)) == [.players("c", "d")])
     #expect(queue.waiting.isEmpty)
 }
 
-@Test func farRatingsWaitForTheWindowToWiden() {
-    var queue = Matchmaker(window: 300, windowPerSecond: 100, botFill: .seconds(10))
-    let start = ContinuousClock.now
-    queue.join("a", rating: 1000, at: start)
-    queue.join("b", rating: 1600, at: start)
-    #expect(queue.pairings(at: start + .seconds(1)).isEmpty)
-    #expect(queue.pairings(at: start + .seconds(3)) == [.players("a", "b")])
-}
-
 @Test func aLonePlayerGetsABotAfterTenSeconds() {
-    var queue = Matchmaker(window: 300, windowPerSecond: 100, botFill: .seconds(10))
+    var queue = Matchmaker(botFill: .seconds(10))
     let start = ContinuousClock.now
-    queue.join("a", rating: 1000, at: start)
+    queue.join("a", at: start)
     #expect(queue.pairings(at: start + .seconds(9.9)).isEmpty)
     #expect(queue.pairings(at: start + .seconds(10)) == [.bot("a")])
-    queue.join("b", rating: 1000, at: start)
+    queue.join("b", at: start)
     queue.leave("b")
     #expect(queue.pairings(at: start + .seconds(20)).isEmpty)
+}
+
+@Test func joiningTwiceKeepsThePlaceInTheQueue() {
+    var queue = Matchmaker(botFill: .seconds(10))
+    let start = ContinuousClock.now
+    queue.join("a", at: start)
+    queue.join("a", at: start + .seconds(5))
+    #expect(queue.pairings(at: start + .seconds(10)) == [.bot("a")])
 }
 
 @Test func messagesSurviveTheWire() throws {

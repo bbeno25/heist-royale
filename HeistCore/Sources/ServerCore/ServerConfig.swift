@@ -19,14 +19,14 @@ public struct ServerConfig: Sendable {
     /// Chase timeouts in a row before a bot plays the rest of the round for that player.
     public var timeoutsBeforeTakeover = 2
 
-    // Matchmaking
+    // Matchmaking: first come, first served; ratings play no part.
     /// A player still alone in the queue after this long gets a bot.
     public var botFill: Duration = .seconds(10)
     public var queueStatusEvery: Duration = .seconds(2)
     public var matchmakingTick: Duration = .milliseconds(250)
-    /// Two players match when their overall ratings are this close, plus the growth for each second waited.
-    public var ratingWindow = 300.0
-    public var ratingWindowPerSecond = 100.0
+
+    /// Rows in a leaderboard page (the asking player's own row comes on top of these).
+    public var leaderboardSize = 100
 
     // Bots: think times in seconds, so they don't answer instantly.
     public var botPrepThink: ClosedRange<Double> = 4...12
@@ -50,7 +50,6 @@ public struct ServerConfig: Sendable {
         }
         config.botPrepThink = botPrepThink.lowerBound * factor...botPrepThink.upperBound * factor
         config.botTurnThink = botTurnThink.lowerBound * factor...botTurnThink.upperBound * factor
-        config.ratingWindowPerSecond = ratingWindowPerSecond / factor
         return config
     }
 }

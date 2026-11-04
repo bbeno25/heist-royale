@@ -2,7 +2,7 @@ import HeistCore
 import SwiftUI
 
 // The home screen's controls, sized in design points times the stage scale.
-// They are real buttons (VoiceOver, press feedback); only PLAY has an action so far.
+// They are real buttons (VoiceOver, press feedback); PLAY and Leaderboards have actions so far.
 
 /// Avatar with level ring, name and combined rating.
 struct ProfileChip: View {
@@ -172,11 +172,12 @@ struct SideTile: View {
     let kind: Kind
     let player: PlayerSummary
     let skin: HomeSkin
+    var action: () -> Void = {}
 
     @Environment(\.stageScale) private var s
 
     var body: some View {
-        Button {} label: {
+        Button(action: action) {
             VStack(spacing: 5 * s) {
                 disc
                 Text(kind.title)

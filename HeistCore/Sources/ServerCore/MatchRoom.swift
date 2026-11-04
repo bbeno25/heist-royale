@@ -10,7 +10,7 @@ struct MatchReport: Sendable {
 }
 
 /// Rating changes for both seats, as `PlayerStore.finish` returns them.
-typealias RatingUpdate = SeatPair<(before: Ratings, after: Ratings)>
+typealias RatingUpdate = SeatPair<RatingChange>
 
 /// One match: the ready check, then the tournament's rounds (briefing, deal, prep, intel reveal, chase
 /// turns, result) on server timers. The room holds the full state and sends each player only their own
@@ -402,7 +402,7 @@ actor MatchRoom {
             }
         case .emote(let emote):
             send(.emote(emote), to: seat.other)
-        case .hello, .queueJoin, .queueLeave:
+        case .hello, .queueJoin, .queueLeave, .leaderboardGet:
             break
         }
     }

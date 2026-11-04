@@ -2,6 +2,7 @@
 // whoever it meets, deciding with the HeistCore bot from the views the server sends.
 //
 //   swift run heist-client [--url ws://localhost:8080/ws] [--name Tester] [--token TOKEN] [--seed N] [--quiet]
+//   swift run heist-client --leaderboard [--country TR] [--token TOKEN]   (prints the three boards instead)
 //
 // Exits with 1 if the server refused an action or sent a view with something the role mustn't know.
 
@@ -26,12 +27,45 @@ func say(_ line: String) {
 
 func rating(_ r: Rating) -> String { String(Int(r.value.rounded())) }
 
+extension String {
+    func leftPadded(to width: Int) -> String { String(repeating: " ", count: max(0, width - count)) + self }
+}
+
 let socket = URLSession(configuration: .default).webSocketTask(with: url)
 socket.resume()
 
 func send(_ message: ClientMessage) async throws {
     let data = try JSONEncoder().encode(ClientEnvelope(message))
     try await socket.send(.string(String(decoding: data, as: UTF8.self)))
+}
+
+if CommandLine.arguments.contains("--leaderboard") {
+    let country = option("--country")
+    if let token = option("--token") { try await send(.hello(.init(token: token, name: ""))) }
+    for board in LeaderboardBoard.allCases {
+        try await send(.leaderboardGet(.init(board: board, scope: country == nil ? .global : .country, country: country)))
+    }
+    var printed = 0
+    while printed < LeaderboardBoard.allCases.count {
+        guard case .string(let text) = try await socket.receive() else { continue }
+        switch try JSONDecoder().decode(ServerEnvelope.self, from: Data(text.utf8)).message {
+        case .leaderboard(let page):
+            printed += 1
+            print("\(page.board.rawValue.capitalized) · \(page.country ?? "global") · \(page.players) ranked")
+            for entry in page.entries {
+                let rank = String(entry.rank).leftPadded(to: 4), rating = String(entry.rating).leftPadded(to: 5)
+                print("\(rank)  \(entry.name.padding(toLength: 20, withPad: " ", startingAt: 0)) \(rating)  \(entry.games) games  \(entry.country ?? "")")
+            }
+            if let you = page.you { print("  you: #\(you.rank), \(you.rating)") }
+        case .error(let error):
+            print("Server refused: \(error.code): \(error.message)")
+            printed += 1
+        default:
+            break
+        }
+    }
+    socket.cancel(with: .normalClosure, reason: nil)
+    exit(0)
 }
 
 var player = AutoPlayer(seed: seed)

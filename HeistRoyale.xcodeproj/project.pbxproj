@@ -10,6 +10,7 @@
 		0842BF3CE3E901FAC71B1DFC /* MatchRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFEE96D52F53FA790898EBEB /* MatchRules.swift */; };
 		08F0B8F15B02A20E2B4C9B07 /* MatchScreenParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2461C2C6E0193534156CAD /* MatchScreenParts.swift */; };
 		091D480E0045ECBF0EF59504 /* HomeControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7027AD0341D515F6A0F48C5F /* HomeControls.swift */; };
+		0DCC071ECCAF869D999167B2 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1728B1211076EDEC958FFF4F /* LeaderboardView.swift */; };
 		119FDEE941A6AC72D356DED1 /* HomeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF8B42FD953824D75101C53D /* HomeTheme.swift */; };
 		13C41125C057AB3028352C59 /* LineLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */; };
 		18D27B99344C0172C495436A /* MatchNotes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C10F5237E8179239050D51 /* MatchNotes.swift */; };
@@ -27,10 +28,12 @@
 		7030527ED3982BB8B02A65BF /* BoardMaterials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 242AE901EDC956E8DE53B440 /* BoardMaterials.swift */; };
 		70B596B4A13972700CAAEE12 /* ServerSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2DDDCD1FA447E0E1403D507 /* ServerSync.swift */; };
 		74EF5F1DD500D1F40D9AE1DF /* GameConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E0F092874687FBD42E4A16F /* GameConnection.swift */; };
+		760FB84EE5BFC3E312CA1ED2 /* LeaderboardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6010947452FEF9726F6C879 /* LeaderboardModel.swift */; };
 		767A372EC8492CD41A21BC4D /* HarborBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE1075D1A2B1CB980F02E1A /* HarborBoard.swift */; };
 		783636E985B1D8D19A427B55 /* Baloo2.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2F5035F93512A5C51321C527 /* Baloo2.ttf */; };
 		7C0C2A393BF3FE78EE3ADA58 /* BoardMeshes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C3D8A40471EAACDD37A17A7 /* BoardMeshes.swift */; };
 		8280F1D2377AC209D1638014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ECE2966AAA2086B0247FAE99 /* Assets.xcassets */; };
+		8E581B5DD3E460AAA9215B69 /* PlayerAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72A70214401EF4A65FE8CEF5 /* PlayerAccount.swift */; };
 		8EC0CDCD83225FEFFE5CC480 /* MatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2535045773BB08A0A975A4EF /* MatchView.swift */; };
 		99EFEE57DB2439025CAD980D /* SVGPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FE35DE0D9E4B2EFEE37BEC /* SVGPath.swift */; };
 		A3E620A9366B1C2AE084FE0E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09943C9D26FA4CF2FE92FCC /* HomeView.swift */; };
@@ -51,6 +54,7 @@
 		EB12A3C3445C26784F5E0E90 /* StackedLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F42B3955088EE91B848D002A /* StackedLogo.swift */; };
 		F035CF3A87EA127E4820C4D5 /* MatchPanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 410291BF181CF837EDAE1FC2 /* MatchPanels.swift */; };
 		F64B070F0995523B43055428 /* HeistRoyaleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F674974AD88E08482DD9B8 /* HeistRoyaleApp.swift */; };
+		F6E63FA03AA11973ECDCBDF1 /* RankLadder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7266FD2B53B99DD3F06FEB4B /* RankLadder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +62,7 @@
 		03FC0F945230890680D47D30 /* MatchScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchScreens.swift; sourceTree = "<group>"; };
 		05C10F5237E8179239050D51 /* MatchNotes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchNotes.swift; sourceTree = "<group>"; };
 		079AFBA5164DFA1AA0AE77DC /* LineLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineLogo.swift; sourceTree = "<group>"; };
+		1728B1211076EDEC958FFF4F /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		242AE901EDC956E8DE53B440 /* BoardMaterials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardMaterials.swift; sourceTree = "<group>"; };
 		24BE5C525184EB0A80B493FC /* NunitoSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = NunitoSans.ttf; sourceTree = "<group>"; };
 		2535045773BB08A0A975A4EF /* MatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchView.swift; sourceTree = "<group>"; };
@@ -76,12 +81,15 @@
 		610687B682AAC6EC69E65A07 /* HeistRoyale.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HeistRoyale.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E8962F63C98B416452B8981 /* Wordmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Wordmark.swift; sourceTree = "<group>"; };
 		7027AD0341D515F6A0F48C5F /* HomeControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeControls.swift; sourceTree = "<group>"; };
+		7266FD2B53B99DD3F06FEB4B /* RankLadder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankLadder.swift; sourceTree = "<group>"; };
+		72A70214401EF4A65FE8CEF5 /* PlayerAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAccount.swift; sourceTree = "<group>"; };
 		7D8E620E4EB93EE98F765F0B /* Fredoka-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Fredoka-OFL.txt"; sourceTree = "<group>"; };
 		84F72F9243CB0C121AEFA933 /* MatchOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchOverlays.swift; sourceTree = "<group>"; };
 		8D5BCA8761D90345554C50ED /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		91FCF1A331423932B8CC4C7E /* HeistCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = HeistCore; path = HeistCore; sourceTree = SOURCE_ROOT; };
 		97F674974AD88E08482DD9B8 /* HeistRoyaleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeistRoyaleApp.swift; sourceTree = "<group>"; };
 		A557323D7D8102001CE3792D /* BoardProps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardProps.swift; sourceTree = "<group>"; };
+		A6010947452FEF9726F6C879 /* LeaderboardModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardModel.swift; sourceTree = "<group>"; };
 		A7ABB5D01A39457533238B1A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ACE1075D1A2B1CB980F02E1A /* HarborBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HarborBoard.swift; sourceTree = "<group>"; };
 		B4FE35DE0D9E4B2EFEE37BEC /* SVGPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SVGPath.swift; sourceTree = "<group>"; };
@@ -131,6 +139,15 @@
 				91FCF1A331423932B8CC4C7E /* HeistCore */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		1EE0A960BCF4AD1404650F1A /* Leaderboard */ = {
+			isa = PBXGroup;
+			children = (
+				A6010947452FEF9726F6C879 /* LeaderboardModel.swift */,
+				1728B1211076EDEC958FFF4F /* LeaderboardView.swift */,
+			);
+			path = Leaderboard;
 			sourceTree = "<group>";
 		};
 		304356F87249550E74B5F52B /* Board3D */ = {
@@ -191,8 +208,10 @@
 				BDDB740300DA0C0C372F4785 /* Graphics */,
 				B36F3BFEABD8DB1090F35BF3 /* Home */,
 				037A08538FEA2201746BC054 /* Launch */,
+				1EE0A960BCF4AD1404650F1A /* Leaderboard */,
 				9E4D9FF524906ED7C923BDCF /* Match */,
 				ADBA8A1B50822F42AC490192 /* Online */,
+				BB85383C48389CE5FF6BB46A /* Profile */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -235,6 +254,15 @@
 				D09943C9D26FA4CF2FE92FCC /* HomeView.swift */,
 			);
 			path = Home;
+			sourceTree = "<group>";
+		};
+		BB85383C48389CE5FF6BB46A /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				72A70214401EF4A65FE8CEF5 /* PlayerAccount.swift */,
+				7266FD2B53B99DD3F06FEB4B /* RankLadder.swift */,
+			);
+			path = Profile;
 			sourceTree = "<group>";
 		};
 		BDDB740300DA0C0C372F4785 /* Graphics */ = {
@@ -354,6 +382,8 @@
 				119FDEE941A6AC72D356DED1 /* HomeTheme.swift in Sources */,
 				A3E620A9366B1C2AE084FE0E /* HomeView.swift in Sources */,
 				514AAEEAABA1D42E812E9D3C /* LaunchModel.swift in Sources */,
+				760FB84EE5BFC3E312CA1ED2 /* LeaderboardModel.swift in Sources */,
+				0DCC071ECCAF869D999167B2 /* LeaderboardView.swift in Sources */,
 				13C41125C057AB3028352C59 /* LineLogo.swift in Sources */,
 				CDF31B0B2D12EF41764706AA /* MatchBoardScene.swift in Sources */,
 				6C6C1F336C70079FF6FC0C39 /* MatchCard.swift in Sources */,
@@ -366,6 +396,8 @@
 				08F0B8F15B02A20E2B4C9B07 /* MatchScreenParts.swift in Sources */,
 				1FA6544405A70683DB073EBC /* MatchScreens.swift in Sources */,
 				8EC0CDCD83225FEFFE5CC480 /* MatchView.swift in Sources */,
+				8E581B5DD3E460AAA9215B69 /* PlayerAccount.swift in Sources */,
+				F6E63FA03AA11973ECDCBDF1 /* RankLadder.swift in Sources */,
 				4514E5DC92B03C32AAF712A1 /* RootView.swift in Sources */,
 				99EFEE57DB2439025CAD980D /* SVGPath.swift in Sources */,
 				70B596B4A13972700CAAEE12 /* ServerSync.swift in Sources */,

@@ -1,10 +1,9 @@
-/// The queue. Two waiting players match when their overall ratings are close enough; the window widens
-/// every second, so with few players online anyone pairs up within a few seconds. A player still alone
-/// after `botFill` gets a bot.
+/// The queue. Players meet first come, first served, whatever their ratings (decided 4 Nov 2026): the two
+/// who have waited longest play each other. A player still alone after `botFill` gets a bot (the server
+/// picks the free bot rated closest to them).
 struct Matchmaker {
     struct Waiting {
         let id: String
-        let rating: Double
         let since: ContinuousClock.Instant
         var lastStatus: ContinuousClock.Instant
     }
@@ -14,14 +13,11 @@ struct Matchmaker {
         case bot(String)
     }
 
-    var window: Double
-    var windowPerSecond: Double
     var botFill: Duration
+    /// In the order they joined.
     private(set) var waiting: [Waiting] = []
 
-    init(window: Double, windowPerSecond: Double, botFill: Duration) {
-        self.window = window
-        self.windowPerSecond = windowPerSecond
+    init(botFill: Duration) {
         self.botFill = botFill
     }
 
@@ -29,9 +25,9 @@ struct Matchmaker {
         waiting.contains { $0.id == id }
     }
 
-    mutating func join(_ id: String, rating: Double, at now: ContinuousClock.Instant) {
+    mutating func join(_ id: String, at now: ContinuousClock.Instant) {
         guard !contains(id) else { return }
-        waiting.append(Waiting(id: id, rating: rating, since: now, lastStatus: now))
+        waiting.append(Waiting(id: id, since: now, lastStatus: now))
     }
 
     mutating func leave(_ id: String) {
@@ -48,25 +44,18 @@ struct Matchmaker {
         return due
     }
 
-    /// Takes every pairing that can be made now out of the queue, longest-waiting players first.
+    /// Takes every pairing that can be made now out of the queue: players two by two in the order they
+    /// joined, then a bot for the one left over once they have waited `botFill`.
     mutating func pairings(at now: ContinuousClock.Instant) -> [Pairing] {
         var out: [Pairing] = []
-        var taken: Set<String> = []
-        func reach(_ w: Waiting) -> Double { window + windowPerSecond * (now - w.since).seconds }
-        for player in waiting where !taken.contains(player.id) {
-            let partner = waiting
-                .filter { $0.id != player.id && !taken.contains($0.id) }
-                .filter { abs($0.rating - player.rating) <= min(reach(player), reach($0)) }
-                .min { abs($0.rating - player.rating) < abs($1.rating - player.rating) }
-            if let partner {
-                taken.formUnion([player.id, partner.id])
-                out.append(.players(player.id, partner.id))
-            } else if now - player.since >= botFill {
-                taken.insert(player.id)
-                out.append(.bot(player.id))
-            }
+        while waiting.count >= 2 {
+            let first = waiting.removeFirst(), second = waiting.removeFirst()
+            out.append(.players(first.id, second.id))
         }
-        waiting.removeAll { taken.contains($0.id) }
+        if let lone = waiting.first, now - lone.since >= botFill {
+            waiting.removeFirst()
+            out.append(.bot(lone.id))
+        }
         return out
     }
 }

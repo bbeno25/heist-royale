@@ -61,7 +61,7 @@ final class MatchModel {
     private(set) var feedback = Feedback(kind: .selection, count: 0)
 
     // Series
-    private(set) var player = PlayerSummary.sample
+    private(set) var player: PlayerSummary
     private(set) var opponent = Opponent.unknown
     /// Won the coin flip: Player 1 (seat A) is the thief in rounds 1–3 and 7.
     private(set) var userIsPlayer1 = true
@@ -79,6 +79,8 @@ final class MatchModel {
     private let onExit: () -> Void
     private let onPlayAgain: () -> Void
     private let connection: GameConnection
+    /// The saved online account: online matches update it, offline ones leave it alone.
+    private let account: PlayerAccount
     private var started = false
     private var you = Seat.a
     private var series = Tournament()
@@ -110,10 +112,17 @@ final class MatchModel {
         let count: Int
     }
 
-    init(onExit: @escaping () -> Void, onPlayAgain: @escaping () -> Void) {
+    init(account: PlayerAccount, onExit: @escaping () -> Void, onPlayAgain: @escaping () -> Void) {
+        self.account = account
         self.onExit = onExit
         self.onPlayAgain = onPlayAgain
         connection = GameConnection(target: GameServerAddress.target)
+        player = account.summary
+        // Until the server says otherwise: the saved ratings online, a fresh account offline.
+        let saved = PlayerAccount.host == nil ? HeistCore.Ratings.starting(at: 1000) : account.ratings
+        myRatings = saved
+        startRatings = Ratings(saved)
+        ratings = Ratings(saved)
     }
 
     var pointsLeft: Int {
@@ -170,7 +179,7 @@ final class MatchModel {
         case .remote(let url): token = GuestToken.load(for: url.host() ?? "")
         case .local: name = player.name
         }
-        connection.open(ClientMessage.Hello(token: token, name: name))
+        connection.open(ClientMessage.Hello(token: token, name: name, region: PlayerAccount.region))
     }
 
     /// Tries again from the failed screen.
@@ -216,7 +225,10 @@ final class MatchModel {
             reconnects = 0
             player.name = welcome.player.name
             myRatings = welcome.player.ratings
-            if case .remote(let url) = connection.target { GuestToken.save(welcome.token, for: url.host() ?? "") }
+            if case .remote(let url) = connection.target {
+                GuestToken.save(welcome.token, for: url.host() ?? "")
+                account.update(from: welcome)
+            }
             if welcome.matchId == nil, phase == .connecting || phase == .searching {
                 connection.send(.queueJoin(.init()))
                 phase = .searching
@@ -286,6 +298,7 @@ final class MatchModel {
             finalResult = end
             startRatings = Ratings(end.ratingsBefore)
             ratings = Ratings(end.ratingsAfter)
+            if case .remote = connection.target { account.update(ratings: end.ratingsAfter) }
             score = Score(you: end.score[you], bot: end.score[you.other])
             if phase != .roundResult {
                 ticker?.cancel()
@@ -307,6 +320,8 @@ final class MatchModel {
             }
         case .error(let error):
             refused(error)
+        case .leaderboard:
+            break  // the match never asks for one
         }
         return nil
     }
